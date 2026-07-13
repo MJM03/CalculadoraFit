@@ -1,4 +1,4 @@
-const CACHE='fit-calculator-pro-v1.2.0';
+const CACHE='fit-calculator-pro-v1.2.1';
 const ASSETS=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon-180.png","./icon-192.png","./icon-512.png","./demo-squat.gif","./demo-hinge.gif","./demo-press.gif","./demo-row.gif","./demo-pull.gif","./demo-overhead.gif","./demo-curl.gif","./demo-lateral.gif","./demo-lunge.gif","./demo-pushup.gif","./demo-plank.gif","./demo-machine.gif"];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));

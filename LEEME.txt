@@ -1,18 +1,15 @@
-FIT CALCULATOR PRO — v1.2.0
+FIT CALCULATOR PRO — v1.2.1
 
-MÓDULO DE ENTRENAMIENTO
-- Biblioteca amplia de ejercicios por músculo y equipo.
-- Buscador y filtros.
-- Demostraciones GIF originales integradas, sin depender de internet.
-- Fichas con técnica e indicaciones.
-- Splits semanales guardables.
-- Plantillas: Full Body 3 días, Upper/Lower 4 días, PPL 6 días y grupos 5 días.
-- Agenda semanal y entrenamiento del día.
-- Sesión guiada con ejercicios, series, peso, repeticiones y RIR.
-- Progresión inteligente por doble progresión.
-- Historial, volumen, 1RM estimado y peso máximo.
-- Todo se guarda localmente en el dispositivo.
+MEJORA PRINCIPAL
+- Al crear o editar un split ya no necesitas escribir IDs.
+- Selector visual de ejercicios con buscador.
+- Filtros por músculo y equipo.
+- Selección múltiple.
+- Vista de ejercicios ya elegidos.
+- Eliminación rápida desde chips.
+- GIF, nombre, músculo y equipo visibles antes de seleccionar.
+- Guardado directo en el día correspondiente del split.
 
 ACTUALIZACIÓN
-Reemplaza los archivos de tu repositorio por los de este ZIP. No hay carpetas.
-Después de publicar, cierra y vuelve a abrir la PWA para cargar la caché v1.2.0.
+Reemplaza todos los archivos del repositorio por los del ZIP.
+Después, cierra completamente la PWA y vuelve a abrirla para cargar la caché v1.2.1.

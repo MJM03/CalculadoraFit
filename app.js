@@ -231,7 +231,7 @@ const TEMPLATE_SPLITS={
   {day:'fri',name:'Brazos',exercises:['curl_biceps','curl_mancuernas','curl_martillo','extension_triceps','press_frances']}
  ]}
 };
-let selectedExerciseId=null, editingSplitId=null, draftSplit=null, trainingTab='week';
+let selectedExerciseId=null, editingSplitId=null, draftSplit=null, trainingTab='week', splitPickerDay=null, splitPickerSelection=[];
 
 function demoFor(ex){return `demo-${EXERCISES[ex]?.pattern||'machine'}.gif`}
 function todayKey(){return DAY_KEYS[(new Date().getDay()+6)%7]}
@@ -325,15 +325,75 @@ function closeSplitModal(){$('#splitModal').hidden=true}
 $$('[data-close-split]').forEach(x=>x.addEventListener('click',closeSplitModal));
 function applyTemplate(key){const t=TEMPLATE_SPLITS[key];draftSplit={id:editingSplitId,name:t.name,days:JSON.parse(JSON.stringify(t.days))};$('#splitName').value=t.name;renderSplitEditor()}
 $$('#splitTemplates button').forEach(b=>b.addEventListener('click',()=>applyTemplate(b.dataset.template)));
+
+function populateSplitPickerFilters(){
+ const muscles=[...new Set(Object.values(EXERCISES).map(x=>x.muscle))].sort();
+ const equipment=[...new Set(Object.values(EXERCISES).map(x=>x.equipment))].sort();
+ $('#splitExerciseMuscleFilter').innerHTML='<option value="">Todos los músculos</option>'+muscles.map(x=>`<option>${x}</option>`).join('');
+ $('#splitExerciseEquipmentFilter').innerHTML='<option value="">Todo el equipo</option>'+equipment.map(x=>`<option>${x}</option>`).join('');
+}
+function openSplitExercisePicker(dayKey){
+ splitPickerDay=dayKey;
+ let day=draftSplit.days.find(x=>x.day===dayKey);
+ if(!day){day={day:dayKey,name:'Entrenamiento',exercises:[]};draftSplit.days.push(day)}
+ splitPickerSelection=[...day.exercises];
+ const dayIndex=DAY_KEYS.indexOf(dayKey);
+ setText('splitPickerTitle',`Ejercicios del ${DAYS[dayIndex]}`);
+ $('#splitExerciseSearch').value='';
+ $('#splitExerciseMuscleFilter').value='';
+ $('#splitExerciseEquipmentFilter').value='';
+ renderSplitExercisePicker();
+ $('#splitExercisePicker').hidden=false;
+}
+function closeSplitExercisePicker(){$('#splitExercisePicker').hidden=true}
+$$('[data-close-split-picker]').forEach(x=>x.addEventListener('click',closeSplitExercisePicker));
+function toggleSplitExercise(id){
+ const idx=splitPickerSelection.indexOf(id);
+ if(idx>=0)splitPickerSelection.splice(idx,1);else splitPickerSelection.push(id);
+ renderSplitExercisePicker();
+}
+function renderSplitSelected(){
+ setText('splitSelectedCount',`${splitPickerSelection.length} ejercicio${splitPickerSelection.length===1?'':'s'}`);
+ const wrap=$('#splitSelectedExercises');
+ wrap.innerHTML=splitPickerSelection.length
+  ? splitPickerSelection.map(id=>`<span class="split-selected-chip">${EXERCISES[id]?.name||id}<button type="button" data-remove-selected="${id}">×</button></span>`).join('')
+  : '<span class="empty-selected">Aún no seleccionaste ejercicios.</span>';
+ $$('[data-remove-selected]',wrap).forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleSplitExercise(b.dataset.removeSelected)}));
+}
+function renderSplitExercisePicker(){
+ const q=$('#splitExerciseSearch').value.toLowerCase().trim();
+ const muscle=$('#splitExerciseMuscleFilter').value;
+ const equipment=$('#splitExerciseEquipmentFilter').value;
+ const entries=Object.entries(EXERCISES).filter(([id,x])=>
+   (!q||`${x.name} ${x.muscle} ${x.secondary} ${x.equipment}`.toLowerCase().includes(q)) &&
+   (!muscle||x.muscle===muscle) &&
+   (!equipment||x.equipment===equipment)
+ );
+ $('#splitExerciseOptions').innerHTML=entries.map(([id,x])=>`
+   <article class="split-exercise-option ${splitPickerSelection.includes(id)?'selected':''}" data-split-exercise="${id}">
+     <img src="${demoFor(id)}" alt="${x.name}">
+     <div><h3>${x.name}</h3><p>${x.muscle}${x.secondary?` · ${x.secondary}`:''} · ${x.equipment}</p></div>
+     <span class="split-exercise-check">✓</span>
+   </article>`).join('');
+ $$('[data-split-exercise]',$('#splitExerciseOptions')).forEach(card=>card.addEventListener('click',()=>toggleSplitExercise(card.dataset.splitExercise)));
+ renderSplitSelected();
+}
+['splitExerciseSearch','splitExerciseMuscleFilter','splitExerciseEquipmentFilter'].forEach(id=>{
+ $('#'+id).addEventListener(id==='splitExerciseSearch'?'input':'change',renderSplitExercisePicker);
+});
+$('#saveSplitExercisesBtn').addEventListener('click',()=>{
+ let day=draftSplit.days.find(x=>x.day===splitPickerDay);
+ if(!day){day={day:splitPickerDay,name:'Entrenamiento',exercises:[]};draftSplit.days.push(day)}
+ day.exercises=[...splitPickerSelection];
+ if(day.name==='Descanso'&&day.exercises.length)day.name='Entrenamiento';
+ closeSplitExercisePicker();renderSplitEditor();toast('Ejercicios actualizados');
+});
+
 function renderSplitEditor(){
  const map=Object.fromEntries((draftSplit.days||[]).map(x=>[x.day,x]));
  $('#splitDaysEditor').innerHTML=DAY_KEYS.map((key,i)=>{const d=map[key]||{day:key,name:'Descanso',exercises:[]};return `<article class="split-day-editor" data-day="${key}"><div class="split-day-editor-head"><strong>${DAYS[i]}</strong><input class="split-day-name" value="${d.name}"></div><div class="split-day-exercises">${d.exercises.map(id=>`<span>${EXERCISES[id]?.name||id}</span>`).join('')||'<span>Sin ejercicios</span>'}</div><button data-edit-day="${key}">Seleccionar ejercicios</button></article>`}).join('');
  $$('.split-day-name',$('#splitDaysEditor')).forEach(inp=>inp.addEventListener('input',()=>{const key=inp.closest('[data-day]').dataset.day;let d=draftSplit.days.find(x=>x.day===key);if(!d){d={day:key,name:inp.value,exercises:[]};draftSplit.days.push(d)}else d.name=inp.value}));
- $$('[data-edit-day]',$('#splitDaysEditor')).forEach(b=>b.addEventListener('click',()=>{
-   const key=b.dataset.editDay;let d=draftSplit.days.find(x=>x.day===key);if(!d){d={day:key,name:'Entrenamiento',exercises:[]};draftSplit.days.push(d)}
-   const names=prompt('Escribe IDs separados por coma o usa luego la biblioteca. Ejemplos: press_banca, sentadilla, remo_barra',d.exercises.join(', '));
-   if(names!==null)d.exercises=names.split(',').map(x=>x.trim()).filter(x=>EXERCISES[x]);renderSplitEditor();
- }));
+ $$('[data-edit-day]',$('#splitDaysEditor')).forEach(b=>b.addEventListener('click',()=>openSplitExercisePicker(b.dataset.editDay)));
 }
 $('#newSplitBtn').addEventListener('click',()=>openSplitModal());
 $('#openTemplatesBtn').addEventListener('click',()=>openSplitModal());
@@ -427,6 +487,6 @@ $('#installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;de
 
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(state.theme==='auto')applyTheme()});
-$('#proteinDate').value=today();populateFilters();
+$('#proteinDate').value=today();populateFilters();populateSplitPickerFilters();
 applyTheme();hydrateForm();renderAll();renderProgress();
 })();

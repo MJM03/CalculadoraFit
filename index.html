@@ -19,7 +19,7 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><span>F</span></div>
-        <div><strong>Fit Calculator</strong><small>PRO · v1.2.0</small></div>
+        <div><strong>Fit Calculator</strong><small>PRO · v1.2.1</small></div>
       </div>
       <div class="top-actions">
         <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema" title="Cambiar tema">
@@ -337,7 +337,7 @@
           <label class="settings-file"><span><b>Importar respaldo</b><small>Restaurar desde archivo JSON</small></span><em>›</em><input type="file" id="importJson" accept=".json,application/json"></label>
           <button id="resetBtn" class="danger-row"><span><b>Borrar todos los datos</b><small>Perfil, plan e historial</small></span><em>›</em></button>
         </article>
-        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.2.0 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
+        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.2.1 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
       </section>
     </main>
 
@@ -355,5 +355,33 @@
     <div class="modal-card card"><h2>¿Borrar todos los datos?</h2><p>Esta acción no se puede deshacer. Puedes exportar un respaldo antes.</p><div><button class="secondary-btn" id="cancelReset">Cancelar</button><button class="primary-btn danger" id="confirmReset">Borrar</button></div></div>
   </div>
   <script src="app.js"></script>
+
+      <div class="sheet-modal" id="splitExercisePicker" hidden>
+        <div class="sheet-backdrop" data-close-split-picker></div>
+        <div class="sheet-card split-picker-sheet">
+          <button class="sheet-close" data-close-split-picker>×</button>
+          <span class="eyebrow">SELECCIONAR EJERCICIOS</span>
+          <h2 id="splitPickerTitle">Ejercicios del día</h2>
+          <p>Busca y marca los ejercicios que quieras incluir. Puedes cambiar el orden después.</p>
+
+          <div class="exercise-search card split-picker-search">
+            <input id="splitExerciseSearch" placeholder="Buscar por nombre, músculo o equipo…">
+            <select id="splitExerciseMuscleFilter"><option value="">Todos los músculos</option></select>
+            <select id="splitExerciseEquipmentFilter"><option value="">Todo el equipo</option></select>
+          </div>
+
+          <div class="selected-exercises-panel">
+            <div class="selected-exercises-head">
+              <strong>Seleccionados</strong>
+              <span id="splitSelectedCount">0</span>
+            </div>
+            <div id="splitSelectedExercises" class="split-selected-exercises"></div>
+          </div>
+
+          <div id="splitExerciseOptions" class="split-exercise-options"></div>
+          <button class="primary-btn picker-save-btn" id="saveSplitExercisesBtn">Guardar ejercicios</button>
+        </div>
+      </div>
+
 </body>
 </html>

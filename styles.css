@@ -150,3 +150,28 @@ input,select{width:100%;height:48px;padding:0 13px;border:1px solid var(--line);
  .week-day{grid-template-columns:42px 1fr auto;padding:13px}
 }
 @media(max-width:340px){.exercise-library{grid-template-columns:1fr}.training-tabs button{font-size:9px}}
+
+
+/* v1.2.1 — visual split exercise picker */
+.split-picker-sheet{max-height:94vh;display:flex;flex-direction:column}
+.split-picker-sheet>p{margin:0 0 14px}
+.split-picker-search{flex:0 0 auto;margin-bottom:12px}
+.selected-exercises-panel{flex:0 0 auto;padding:12px;border:1px solid var(--line);border-radius:15px;background:var(--surface-2);margin-bottom:12px}
+.selected-exercises-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.selected-exercises-head strong{font-size:12px}.selected-exercises-head span{font-size:10px;color:var(--accent);font-weight:800}
+.split-selected-exercises{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px}
+.split-selected-chip{display:flex;align-items:center;gap:6px;white-space:nowrap;padding:7px 9px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:9px}
+.split-selected-chip button{width:20px;height:20px;border:0;border-radius:50%;background:var(--surface-2);color:var(--danger);font-size:14px;line-height:1}
+.split-exercise-options{flex:1;min-height:0;overflow:auto;display:grid;gap:9px;padding-bottom:86px}
+.split-exercise-option{display:grid;grid-template-columns:72px 1fr 28px;gap:11px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:15px;background:var(--surface);cursor:pointer}
+.split-exercise-option.selected{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 12%,transparent)}
+.split-exercise-option img{width:72px;height:48px;object-fit:cover;border-radius:10px;background:var(--surface-2)}
+.split-exercise-option h3{margin:0;font-size:12px}.split-exercise-option p{margin:3px 0 0;color:var(--muted);font-size:9px}
+.split-exercise-check{width:24px;height:24px;border-radius:8px;border:1px solid var(--line);display:grid;place-items:center;color:transparent;background:var(--surface-2);font-weight:900}
+.split-exercise-option.selected .split-exercise-check{background:var(--accent);color:white;border-color:var(--accent)}
+.picker-save-btn{position:sticky;bottom:0;flex:0 0 auto;margin-top:12px;box-shadow:0 -10px 20px color-mix(in srgb,var(--surface) 80%,transparent)}
+.empty-selected{color:var(--muted);font-size:10px}
+@media(max-width:420px){
+ .split-exercise-option{grid-template-columns:64px 1fr 26px}
+ .split-exercise-option img{width:64px;height:44px}
+}
