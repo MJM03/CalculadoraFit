@@ -19,7 +19,7 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><span>F</span></div>
-        <div><strong>Fit Calculator</strong><small>PRO · v1.1.0</small></div>
+        <div><strong>Fit Calculator</strong><small>PRO · v1.2.0</small></div>
       </div>
       <div class="top-actions">
         <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema" title="Cambiar tema">
@@ -173,86 +173,110 @@
       </section>
 
 
+
       <section class="view" id="view-training">
-        <div class="page-title"><span class="eyebrow">ENTRENAMIENTO</span><h1>Entrenamiento inteligente</h1><p>Registra series reales y recibe una progresión basada en rendimiento, repeticiones y esfuerzo.</p></div>
+        <div class="page-title"><span class="eyebrow">ENTRENAMIENTO</span><h1>Tu gimnasio inteligente</h1><p>Planifica la semana, sigue tu split y registra cada ejercicio con progresión automática.</p></div>
+
+        <div class="training-hero card">
+          <div><span class="eyebrow">HOY</span><h2 id="todayWorkoutTitle">Día libre</h2><p id="todayWorkoutText">Crea o activa un split para organizar tu semana.</p></div>
+          <button class="primary-btn compact-action" id="startTodayBtn">Empezar</button>
+        </div>
 
         <div class="training-kpis">
           <article class="result card"><span>Sesiones</span><strong id="trainingSessions">0</strong><small>registradas</small></article>
-          <article class="result card"><span>Volumen total</span><strong id="trainingVolume">0</strong><small>kg acumulados</small></article>
-          <article class="result card"><span>Récords</span><strong id="trainingPrs">0</strong><small>mejores marcas</small></article>
+          <article class="result card"><span>Volumen</span><strong id="trainingVolume">0</strong><small>kg acumulados</small></article>
+          <article class="result card"><span>Récords</span><strong id="trainingPrs">0</strong><small>ejercicios</small></article>
         </div>
 
-        <article class="card form-card workout-builder">
-          <div class="card-title"><span class="step">▶</span><div><h2>Nueva sesión</h2><p>Elige un ejercicio y registra cada serie.</p></div></div>
-          <div class="form-grid">
-            <label class="field wide"><span>Ejercicio*</span>
-              <select id="exerciseSelect">
-                <optgroup label="Pecho">
-                  <option value="press_banca">Press de banca</option>
-                  <option value="press_inclinado">Press inclinado</option>
-                  <option value="fondos">Fondos</option>
-                </optgroup>
-                <optgroup label="Espalda">
-                  <option value="remo_barra">Remo con barra</option>
-                  <option value="jalon_pecho">Jalón al pecho</option>
-                  <option value="dominadas">Dominadas</option>
-                </optgroup>
-                <optgroup label="Piernas">
-                  <option value="sentadilla">Sentadilla</option>
-                  <option value="peso_muerto">Peso muerto</option>
-                  <option value="prensa">Prensa de piernas</option>
-                  <option value="hip_thrust">Hip thrust</option>
-                </optgroup>
-                <optgroup label="Hombros y brazos">
-                  <option value="press_militar">Press militar</option>
-                  <option value="curl_biceps">Curl de bíceps</option>
-                  <option value="extension_triceps">Extensión de tríceps</option>
-                </optgroup>
-              </select>
-            </label>
-            <label class="field"><span>Fecha*</span><input id="workoutDate" type="date"></label>
-            <label class="field"><span>Objetivo de repeticiones</span>
-              <select id="repRange">
-                <option value="3-5">Fuerza · 3–5</option>
-                <option value="6-8">Fuerza/masa · 6–8</option>
-                <option value="8-12" selected>Hipertrofia · 8–12</option>
-                <option value="12-15">Resistencia · 12–15</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="smart-suggestion" id="smartSuggestion">
-            <span>RECOMENDACIÓN INTELIGENTE</span>
-            <strong>Registra tu primera sesión</strong>
-            <p>Después compararemos rendimiento, RIR y volumen para sugerir la siguiente carga.</p>
-          </div>
-
-          <div class="sets-head"><span>Serie</span><span>Peso</span><span>Reps</span><span>RIR</span><span></span></div>
-          <div id="setsList" class="sets-list"></div>
-          <button type="button" class="secondary-btn add-set-btn" id="addSetBtn">+ Añadir serie</button>
-          <label class="field wide workout-note"><span>Nota de sesión</span><input id="workoutNote" maxlength="120" placeholder="Técnica, molestias, sensaciones..."></label>
-          <button type="button" class="primary-btn" id="saveWorkoutBtn">Guardar entrenamiento</button>
-        </article>
-
-        <div class="section-head"><div><span class="eyebrow">FUERZA</span><h2>Evolución del ejercicio</h2></div></div>
-        <article class="card chart-controls">
-          <label class="field"><span>Ejercicio del gráfico</span><select id="trainingChartExercise"></select></label>
-          <div class="chart-tabs" id="trainingMetricTabs">
-            <button class="selected" data-metric="e1rm">1RM estimado</button>
-            <button data-metric="volume">Volumen</button>
-            <button data-metric="topWeight">Peso máximo</button>
-          </div>
-        </article>
-        <div class="chart-card card tall training-chart-card">
-          <canvas id="trainingChart" height="260"></canvas>
-          <div id="emptyTrainingChart" class="empty-state">Registra dos sesiones del mismo ejercicio para ver su evolución.</div>
+        <div class="training-tabs" id="trainingMainTabs">
+          <button class="selected" data-training-tab="week">Semana</button>
+          <button data-training-tab="library">Ejercicios</button>
+          <button data-training-tab="session">Sesión</button>
+          <button data-training-tab="stats">Progreso</button>
         </div>
 
-        <div class="section-head"><div><span class="eyebrow">HISTORIAL</span><h2>Sesiones recientes</h2></div></div>
-        <div id="workoutHistory" class="history-list"></div>
-        <div id="workoutEmpty" class="card empty-panel"><div>🏋</div><h2>Sin entrenamientos</h2><p>Tu primera sesión aparecerá aquí.</p></div>
+        <div class="training-panel active" id="training-panel-week">
+          <div class="section-head"><div><span class="eyebrow">PLANIFICACIÓN</span><h2>Split semanal</h2></div><button class="text-btn" id="newSplitBtn">Nuevo split</button></div>
+          <article class="card split-selector-card">
+            <label class="field"><span>Split activo</span><select id="activeSplitSelect"></select></label>
+            <div class="split-actions"><button class="secondary-btn compact" id="editSplitBtn">Editar</button><button class="secondary-btn compact" id="duplicateSplitBtn">Duplicar</button></div>
+          </article>
+          <div id="weekSchedule" class="week-schedule"></div>
+          <div id="splitEmpty" class="card empty-panel"><div>▦</div><h2>Organiza tu semana</h2><p>Crea un split o usa una plantilla para saber exactamente qué entrenar cada día.</p><button class="primary-btn" id="openTemplatesBtn">Ver plantillas</button></div>
+        </div>
+
+        <div class="training-panel" id="training-panel-library">
+          <div class="section-head"><div><span class="eyebrow">BIBLIOTECA</span><h2>Ejercicios</h2></div><span class="exercise-count" id="exerciseCount">0</span></div>
+          <div class="exercise-search card">
+            <input id="exerciseSearch" placeholder="Buscar ejercicio, músculo o equipo…">
+            <select id="exerciseMuscleFilter"><option value="">Todos los músculos</option></select>
+            <select id="exerciseEquipmentFilter"><option value="">Todo el equipo</option></select>
+          </div>
+          <div id="exerciseLibrary" class="exercise-library"></div>
+        </div>
+
+        <div class="training-panel" id="training-panel-session">
+          <article class="card session-header">
+            <div><span class="eyebrow">SESIÓN ACTIVA</span><h2 id="sessionRoutineName">Entrenamiento libre</h2><p id="sessionProgressText">Añade ejercicios para empezar.</p></div>
+            <button class="secondary-btn compact" id="finishSessionBtn">Finalizar</button>
+          </article>
+          <div id="sessionExerciseList" class="session-exercise-list"></div>
+          <button class="primary-btn" id="addExerciseToSessionBtn">+ Añadir ejercicio</button>
+        </div>
+
+        <div class="training-panel" id="training-panel-stats">
+          <div class="section-head"><div><span class="eyebrow">FUERZA</span><h2>Evolución del ejercicio</h2></div></div>
+          <article class="card chart-controls">
+            <label class="field"><span>Ejercicio del gráfico</span><select id="trainingChartExercise"></select></label>
+            <div class="chart-tabs" id="trainingMetricTabs">
+              <button class="selected" data-metric="e1rm">1RM estimado</button>
+              <button data-metric="volume">Volumen</button>
+              <button data-metric="topWeight">Peso máximo</button>
+            </div>
+          </article>
+          <div class="chart-card card tall training-chart-card">
+            <canvas id="trainingChart" height="260"></canvas>
+            <div id="emptyTrainingChart" class="empty-state">Registra dos sesiones del mismo ejercicio para ver su evolución.</div>
+          </div>
+          <div class="section-head"><div><span class="eyebrow">HISTORIAL</span><h2>Sesiones recientes</h2></div></div>
+          <div id="workoutHistory" class="history-list"></div>
+          <div id="workoutEmpty" class="card empty-panel"><div>🏋</div><h2>Sin entrenamientos</h2><p>Tu primera sesión aparecerá aquí.</p></div>
+        </div>
       </section>
 
+      <div class="sheet-modal" id="exerciseModal" hidden>
+        <div class="sheet-backdrop" data-close-sheet></div>
+        <div class="sheet-card">
+          <button class="sheet-close" data-close-sheet>×</button>
+          <img id="exerciseDemo" class="exercise-demo" alt="Demostración animada del ejercicio">
+          <span class="eyebrow" id="exerciseModalMuscle">EJERCICIO</span>
+          <h2 id="exerciseModalName">Ejercicio</h2>
+          <p id="exerciseModalMeta"></p>
+          <div class="instruction-grid">
+            <div><strong>Cómo hacerlo</strong><p id="exerciseModalInstructions"></p></div>
+            <div><strong>Consejo técnico</strong><p id="exerciseModalTip"></p></div>
+          </div>
+          <button class="primary-btn" id="modalAddExerciseBtn">Añadir a la sesión</button>
+        </div>
+      </div>
+
+      <div class="sheet-modal" id="splitModal" hidden>
+        <div class="sheet-backdrop" data-close-split></div>
+        <div class="sheet-card split-sheet">
+          <button class="sheet-close" data-close-split>×</button>
+          <span class="eyebrow">PLANIFICACIÓN</span>
+          <h2 id="splitModalTitle">Crear split</h2>
+          <label class="field"><span>Nombre del split</span><input id="splitName" maxlength="50" placeholder="Ej.: Push Pull Legs"></label>
+          <div class="template-chips" id="splitTemplates">
+            <button data-template="fullbody3">Full Body 3 días</button>
+            <button data-template="upperlower4">Upper / Lower 4 días</button>
+            <button data-template="ppl6">Push Pull Legs 6 días</button>
+            <button data-template="bro5">Torso por grupos 5 días</button>
+          </div>
+          <div id="splitDaysEditor" class="split-days-editor"></div>
+          <button class="primary-btn" id="saveSplitBtn">Guardar split</button>
+        </div>
+      </div>
       <section class="view" id="view-progress">
         <div class="page-title"><span class="eyebrow">SEGUIMIENTO</span><h1>Tu progreso</h1><p>Registra mediciones consistentes para observar tendencias.</p></div>
         <article class="card form-card">
@@ -313,7 +337,7 @@
           <label class="settings-file"><span><b>Importar respaldo</b><small>Restaurar desde archivo JSON</small></span><em>›</em><input type="file" id="importJson" accept=".json,application/json"></label>
           <button id="resetBtn" class="danger-row"><span><b>Borrar todos los datos</b><small>Perfil, plan e historial</small></span><em>›</em></button>
         </article>
-        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.1.0 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
+        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.2.0 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
       </section>
     </main>
 

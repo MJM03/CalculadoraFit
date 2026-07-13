@@ -1,20 +1,18 @@
-FIT CALCULATOR PRO — v1.1.0
+FIT CALCULATOR PRO — v1.2.0
 
-NOVEDADES
-- Corrección general de separación entre tarjetas y contenedores.
-- Seguimiento diario de proteína con objetivo, promedio y adherencia.
-- Gráficos de evolución de peso y proteína.
-- Módulo de entrenamiento con ejercicios, series, peso, repeticiones y RIR.
-- Sobrecarga progresiva inteligente mediante doble progresión.
-- Gráficos de 1RM estimado, volumen y peso máximo.
-- Historial de sesiones y récords por ejercicio.
-- PWA, modo oscuro, CSV, respaldo JSON y funcionamiento sin conexión.
+MÓDULO DE ENTRENAMIENTO
+- Biblioteca amplia de ejercicios por músculo y equipo.
+- Buscador y filtros.
+- Demostraciones GIF originales integradas, sin depender de internet.
+- Fichas con técnica e indicaciones.
+- Splits semanales guardables.
+- Plantillas: Full Body 3 días, Upper/Lower 4 días, PPL 6 días y grupos 5 días.
+- Agenda semanal y entrenamiento del día.
+- Sesión guiada con ejercicios, series, peso, repeticiones y RIR.
+- Progresión inteligente por doble progresión.
+- Historial, volumen, 1RM estimado y peso máximo.
+- Todo se guarda localmente en el dispositivo.
 
-PUBLICAR EN GITHUB PAGES
-Sube todos los archivos del ZIP a la raíz del repositorio y reemplaza los anteriores.
-Luego abre la web actualizada y recarga. Si la versión instalada conserva archivos
-antiguos, ciérrala por completo y vuelve a abrirla; el Service Worker actualizará
-la caché a v1.1.0.
-
-PRIVACIDAD
-Toda la información permanece en el dispositivo mediante localStorage.
+ACTUALIZACIÓN
+Reemplaza los archivos de tu repositorio por los de este ZIP. No hay carpetas.
+Después de publicar, cierra y vuelve a abrir la PWA para cargar la caché v1.2.0.
