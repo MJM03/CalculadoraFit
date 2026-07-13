@@ -1,16 +1,18 @@
-NUESTRO ESPACIO v5.3.0
+FIT CALCULATOR PRO — v1.2.2
 
-Sube todos los archivos de esta carpeta a la raíz de tu repositorio de GitHub Pages.
+CORRECCIÓN CRÍTICA
+La versión 1.2.1 cargaba el JavaScript antes de crear el selector visual de ejercicios.
+Eso generaba un error al iniciar y detenía toda la aplicación.
 
-NOVEDADES
-- Sueldo dividido en pagos configurables.
-- Valores iniciales: S/500 el día 15 y S/900 al fin de mes.
-- Estado por pago: automático, esperado, recibido o retrasado.
-- Asignación de gastos fijos, compras y gastos variables por quincena.
-- Opción para dividir compromisos entre ambas quincenas.
-- Vista de saldo seguro hasta la próxima paga.
-- Alertas de quincena insuficiente y sugerencias de redistribución.
-- Ingresos extra asociados automáticamente a la quincena de su fecha.
-- Firebase y datos anteriores compatibles.
+CORREGIDO
+- JavaScript cargado al final del documento.
+- Selector visual disponible antes de conectar eventos.
+- Caché actualizada a v1.2.2.
+- URL del script con control de versión para evitar mezclar archivos antiguos.
+- Protección adicional ante errores de interfaz.
 
-Después de publicar, cierra completamente la PWA y vuelve a abrirla para cargar la nueva caché.
+ACTUALIZACIÓN RECOMENDADA
+1. Elimina todos los archivos anteriores del repositorio.
+2. Sube todos los archivos de este ZIP.
+3. Abre la dirección de GitHub Pages en Safari y recarga.
+4. Si la app está instalada, elimínala de la pantalla de inicio y vuelve a añadirla.
