@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101b17">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Fit">
+  <meta name="description" content="Calculadora fitness integral, privada y sin publicidad.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Fit Calculator Pro</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><span>F</span></div>
+        <div><strong>Fit Calculator</strong><small>PRO · v1.0.0</small></div>
+      </div>
+      <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema" title="Cambiar tema">
+        <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.91-.1-1.35A7 7 0 0 1 13.35 3.1C12.91 3.04 12.46 3 12 3Z"/></svg>
+      </button>
+    </header>
+
+    <main>
+      <section class="view active" id="view-home">
+        <div class="hero card">
+          <div>
+            <span class="eyebrow">TU CENTRO FITNESS</span>
+            <h1 id="helloTitle">Tu progreso, con claridad.</h1>
+            <p id="heroText">Completa tu perfil para obtener un plan estimado y personalizado.</p>
+          </div>
+          <div class="hero-ring" id="goalRing"><span id="goalRingValue">—</span><small>objetivo</small></div>
+        </div>
+
+        <div class="section-head"><div><span class="eyebrow">RESUMEN</span><h2>Indicadores principales</h2></div><button class="text-btn" data-go="calculator">Actualizar</button></div>
+        <div class="metric-grid">
+          <article class="metric card"><span>IMC</span><strong id="mBmi">—</strong><small id="mBmiLabel">Sin calcular</small></article>
+          <article class="metric card"><span>Mantenimiento</span><strong id="mTdee">—</strong><small>kcal/día</small></article>
+          <article class="metric card"><span>Meta diaria</span><strong id="mTarget">—</strong><small>kcal/día</small></article>
+          <article class="metric card"><span>Proteína</span><strong id="mProtein">—</strong><small>g/día</small></article>
+        </div>
+
+        <div class="section-head"><div><span class="eyebrow">HOY</span><h2>Plan diario</h2></div></div>
+        <div class="daily card">
+          <div class="daily-row"><div class="daily-icon">◉</div><div><strong>Calorías</strong><small id="dailyCalText">Calcula tu plan primero</small></div><span id="dailyCal">—</span></div>
+          <div class="progress"><i id="dailyCalBar"></i></div>
+          <div class="daily-row"><div class="daily-icon">P</div><div><strong>Proteína</strong><small id="dailyProteinText">Objetivo nutricional</small></div><span id="dailyProtein">—</span></div>
+          <div class="progress"><i id="dailyProteinBar"></i></div>
+          <div class="daily-row"><div class="daily-icon">◇</div><div><strong>Hidratación</strong><small id="dailyWaterText">Estimación orientativa</small></div><span id="dailyWater">—</span></div>
+          <div class="progress"><i id="dailyWaterBar"></i></div>
+        </div>
+
+        <div class="section-head"><div><span class="eyebrow">EVOLUCIÓN</span><h2>Peso registrado</h2></div><button class="text-btn" data-go="progress">Registrar</button></div>
+        <div class="chart-card card">
+          <canvas id="weightChart" height="210" aria-label="Gráfico de evolución de peso"></canvas>
+          <div id="emptyChart" class="empty-state">Registra al menos dos mediciones para ver tu tendencia.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-calculator">
+        <div class="page-title"><span class="eyebrow">EVALUACIÓN</span><h1>Calculadora integral</h1><p>Datos antropométricos, metabolismo y composición corporal.</p></div>
+        <form id="calcForm" novalidate>
+          <article class="card form-card">
+            <div class="card-title"><span class="step">1</span><div><h2>Perfil</h2><p>Información básica para las estimaciones.</p></div></div>
+            <div class="form-grid">
+              <label class="field wide"><span>Nombre <em>opcional</em></span><input id="name" autocomplete="name" maxlength="40" placeholder="¿Cómo te llamamos?"></label>
+              <label class="field"><span>Sexo fisiológico*</span><select id="sex" required><option value="">Seleccionar</option><option value="male">Masculino</option><option value="female">Femenino</option></select></label>
+              <label class="field"><span>Edad*</span><div class="input-unit"><input id="age" type="number" inputmode="numeric" min="20" max="100" placeholder="28" required><b>años</b></div></label>
+              <label class="field"><span>Peso actual*</span><div class="input-unit"><input id="weight" type="number" inputmode="decimal" min="35" max="350" step="0.1" placeholder="72.5" required><b>kg</b></div></label>
+              <label class="field"><span>Estatura*</span><div class="input-unit"><input id="height" type="number" inputmode="decimal" min="130" max="230" step="0.1" placeholder="175" required><b>cm</b></div></label>
+            </div>
+          </article>
+
+          <article class="card form-card">
+            <div class="card-title"><span class="step">2</span><div><h2>Actividad y objetivo</h2><p>Define tu gasto y la dirección del plan.</p></div></div>
+            <label class="field wide"><span>Nivel de actividad*</span>
+              <select id="activity" required>
+                <option value="">Seleccionar</option>
+                <option value="1.2">Sedentario · poco o nada de ejercicio</option>
+                <option value="1.375">Ligero · 1–3 días/semana</option>
+                <option value="1.55">Moderado · 3–5 días/semana</option>
+                <option value="1.725">Alto · 6–7 días/semana</option>
+                <option value="1.9">Muy alto · trabajo físico o doble sesión</option>
+              </select>
+            </label>
+            <div class="segmented" id="goalSegment">
+              <button type="button" data-value="lose">Perder grasa</button>
+              <button type="button" class="selected" data-value="maintain">Mantener</button>
+              <button type="button" data-value="gain">Ganar masa</button>
+            </div>
+            <input type="hidden" id="goal" value="maintain">
+            <div class="form-grid goal-fields">
+              <label class="field"><span>Peso objetivo</span><div class="input-unit"><input id="targetWeight" type="number" inputmode="decimal" min="35" max="350" step="0.1" placeholder="68"><b>kg</b></div></label>
+              <label class="field"><span>Ritmo semanal</span><select id="weeklyRate"><option value="0.25">Conservador · 0.25 kg</option><option value="0.5" selected>Moderado · 0.50 kg</option><option value="0.75">Exigente · 0.75 kg</option></select></label>
+            </div>
+          </article>
+
+          <article class="card form-card">
+            <div class="card-title"><span class="step">3</span><div><h2>Medidas opcionales</h2><p>Mejoran el análisis de composición corporal.</p></div></div>
+            <div class="form-grid">
+              <label class="field"><span>Cintura</span><div class="input-unit"><input id="waist" type="number" inputmode="decimal" min="40" max="220" step="0.1" placeholder="82"><b>cm</b></div></label>
+              <label class="field"><span>Cuello</span><div class="input-unit"><input id="neck" type="number" inputmode="decimal" min="20" max="80" step="0.1" placeholder="37"><b>cm</b></div></label>
+              <label class="field" id="hipField"><span>Cadera</span><div class="input-unit"><input id="hip" type="number" inputmode="decimal" min="50" max="220" step="0.1" placeholder="98"><b>cm</b></div></label>
+              <label class="field"><span>Entrenamiento</span><select id="training"><option value="general">Salud general</option><option value="strength">Fuerza / hipertrofia</option><option value="endurance">Resistencia</option></select></label>
+            </div>
+          </article>
+
+          <div class="form-message" id="formMessage"></div>
+          <button class="primary-btn sticky-action" type="submit">Calcular mi plan <span>→</span></button>
+        </form>
+      </section>
+
+      <section class="view" id="view-plan">
+        <div class="page-title"><span class="eyebrow">RESULTADOS</span><h1>Tu plan estimado</h1><p id="planSubtitle">Completa la calculadora para generar el plan.</p></div>
+        <div id="planEmpty" class="card empty-panel"><div>◎</div><h2>Aún no hay un plan</h2><p>Ingresa tus datos para calcular calorías, macros y proyección.</p><button class="primary-btn" data-go="calculator">Abrir calculadora</button></div>
+        <div id="planContent" hidden>
+          <div class="result-hero card">
+            <span>OBJETIVO CALÓRICO DIARIO</span>
+            <strong id="rTarget">—</strong><small>kcal / día</small>
+            <div class="result-delta" id="rDelta">Mantenimiento</div>
+          </div>
+          <div class="result-grid">
+            <article class="result card"><span>Metabolismo basal</span><strong id="rBmr">—</strong><small>kcal/día · Mifflin–St Jeor</small></article>
+            <article class="result card"><span>Gasto total</span><strong id="rTdee">—</strong><small>kcal/día estimadas</small></article>
+            <article class="result card"><span>IMC</span><strong id="rBmi">—</strong><small id="rBmiLabel">—</small></article>
+            <article class="result card"><span>Relación cintura/altura</span><strong id="rWhr">—</strong><small id="rWhrLabel">Dato opcional</small></article>
+          </div>
+
+          <div class="section-head"><div><span class="eyebrow">NUTRICIÓN</span><h2>Distribución de macronutrientes</h2></div></div>
+          <div class="macro-card card">
+            <div class="macro-chart" id="macroChart"><div><strong id="macroTotal">—</strong><small>kcal</small></div></div>
+            <div class="macro-list">
+              <div><i class="dot protein"></i><span>Proteína</span><strong id="rProtein">—</strong><small id="rProteinCal">—</small></div>
+              <div><i class="dot carbs"></i><span>Carbohidratos</span><strong id="rCarbs">—</strong><small id="rCarbsCal">—</small></div>
+              <div><i class="dot fats"></i><span>Grasas</span><strong id="rFats">—</strong><small id="rFatsCal">—</small></div>
+            </div>
+          </div>
+
+          <div class="section-head"><div><span class="eyebrow">COMPOSICIÓN</span><h2>Estimaciones corporales</h2></div></div>
+          <div class="result-grid">
+            <article class="result card"><span>Grasa corporal</span><strong id="rBodyFat">—</strong><small id="rBodyFatLabel">Requiere medidas</small></article>
+            <article class="result card"><span>Masa magra</span><strong id="rLeanMass">—</strong><small>estimada</small></article>
+            <article class="result card"><span>Agua diaria</span><strong id="rWater">—</strong><small>orientativa</small></article>
+            <article class="result card"><span>Rango IMC saludable</span><strong id="rHealthyRange">—</strong><small>solo referencia poblacional</small></article>
+          </div>
+
+          <div class="section-head"><div><span class="eyebrow">PROYECCIÓN</span><h2>Ruta hacia tu objetivo</h2></div></div>
+          <article class="projection card">
+            <div><span>Duración estimada</span><strong id="rWeeks">—</strong><small id="rDate">—</small></div>
+            <div class="timeline"><i></i><b></b></div>
+            <p id="rProjectionText">—</p>
+          </article>
+
+          <article class="notice card"><strong>Importante</strong><p>Estas cifras son estimaciones para adultos y no sustituyen una evaluación médica o nutricional. Embarazo, lactancia, enfermedades, medicación o antecedentes alimentarios requieren orientación profesional.</p></article>
+          <button class="secondary-btn" id="sharePlanBtn">Compartir resumen</button>
+        </div>
+      </section>
+
+      <section class="view" id="view-progress">
+        <div class="page-title"><span class="eyebrow">SEGUIMIENTO</span><h1>Tu progreso</h1><p>Registra mediciones consistentes para observar tendencias.</p></div>
+        <article class="card form-card">
+          <div class="card-title"><span class="step">+</span><div><h2>Nueva medición</h2><p>Idealmente a la misma hora y en condiciones similares.</p></div></div>
+          <form id="progressForm">
+            <div class="form-grid">
+              <label class="field"><span>Fecha*</span><input id="progressDate" type="date" required></label>
+              <label class="field"><span>Peso*</span><div class="input-unit"><input id="progressWeight" type="number" inputmode="decimal" min="35" max="350" step="0.1" required><b>kg</b></div></label>
+              <label class="field"><span>Cintura</span><div class="input-unit"><input id="progressWaist" type="number" inputmode="decimal" min="40" max="220" step="0.1"><b>cm</b></div></label>
+              <label class="field"><span>Grasa corporal</span><div class="input-unit"><input id="progressFat" type="number" inputmode="decimal" min="2" max="70" step="0.1"><b>%</b></div></label>
+              <label class="field wide"><span>Nota</span><input id="progressNote" maxlength="100" placeholder="Ej.: semana de descarga"></label>
+            </div>
+            <button class="primary-btn" type="submit">Guardar medición</button>
+          </form>
+        </article>
+        <div class="section-head"><div><span class="eyebrow">TENDENCIA</span><h2>Evolución de peso</h2></div></div>
+        <div class="chart-card card tall"><canvas id="progressChart" height="260"></canvas><div id="emptyProgressChart" class="empty-state">Aún no hay suficientes mediciones.</div></div>
+        <div class="trend-grid">
+          <article class="result card"><span>Cambio total</span><strong id="trendTotal">—</strong><small>desde el primer registro</small></article>
+          <article class="result card"><span>Promedio semanal</span><strong id="trendWeekly">—</strong><small>tendencia aproximada</small></article>
+        </div>
+      </section>
+
+      <section class="view" id="view-history">
+        <div class="page-title"><span class="eyebrow">REGISTROS</span><h1>Historial</h1><p>Todos tus datos permanecen en este dispositivo.</p></div>
+        <div class="history-toolbar">
+          <button class="secondary-btn compact" id="exportCsvBtn">Exportar CSV</button>
+          <button class="secondary-btn compact" id="exportJsonBtn">Respaldo JSON</button>
+        </div>
+        <div id="historyList" class="history-list"></div>
+        <div id="historyEmpty" class="card empty-panel"><div>▤</div><h2>Sin registros</h2><p>Tus mediciones aparecerán aquí.</p></div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="page-title"><span class="eyebrow">AJUSTES</span><h1>Configuración</h1><p>Privacidad, respaldo y apariencia.</p></div>
+        <article class="card settings-list">
+          <button id="settingsTheme"><span><b>Apariencia</b><small id="themeLabel">Automática</small></span><em>›</em></button>
+          <button id="installBtn" hidden><span><b>Instalar aplicación</b><small>Añadir a la pantalla de inicio</small></span><em>›</em></button>
+          <label class="settings-file"><span><b>Importar respaldo</b><small>Restaurar desde archivo JSON</small></span><em>›</em><input type="file" id="importJson" accept=".json,application/json"></label>
+          <button id="resetBtn" class="danger-row"><span><b>Borrar todos los datos</b><small>Perfil, plan e historial</small></span><em>›</em></button>
+        </article>
+        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.0.0 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegación principal">
+      <button class="active" data-view="home"><svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V21h-6v-6H9v6H3Z"/></svg><span>Inicio</span></button>
+      <button data-view="calculator"><svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 3v4h8V6H8Zm0 7h2v2H8v-2Zm3 0h2v2h-2v-2Zm3 0h2v5h-2v-5Zm-6 3h2v2H8v-2Zm3 0h2v2h-2v-2Z"/></svg><span>Calcular</span></button>
+      <button data-view="plan"><svg viewBox="0 0 24 24"><path d="M4 4h16v4H4V4Zm0 6h7v10H4V10Zm9 0h7v4h-7v-4Zm0 6h7v4h-7v-4Z"/></svg><span>Plan</span></button>
+      <button data-view="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5h2v11.1l4.4-4.4 3 3L19.6 8H16V6h7v7h-2V9.4l-7.6 8.3-3-3L6.8 19H4Z"/></svg><span>Progreso</span></button>
+      <button data-view="settings"><svg viewBox="0 0 24 24"><path d="m19.4 13 .1-1-.1-1 2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 3.5h-4L10.7 6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5-.1 1 .1 1-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg><span>Ajustes</span></button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div class="modal" id="confirmModal" hidden>
+    <div class="modal-card card"><h2>¿Borrar todos los datos?</h2><p>Esta acción no se puede deshacer. Puedes exportar un respaldo antes.</p><div><button class="secondary-btn" id="cancelReset">Cancelar</button><button class="primary-btn danger" id="confirmReset">Borrar</button></div></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

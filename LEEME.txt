@@ -1,0 +1,24 @@
+FIT CALCULATOR PRO — v1.0.0
+
+ARCHIVOS
+- index.html
+- styles.css
+- app.js
+- manifest.webmanifest
+- sw.js
+- icon-180.png / icon-192.png / icon-512.png
+
+PUBLICAR EN GITHUB PAGES
+1. Sube todos los archivos a la raíz del repositorio.
+2. Ve a Settings > Pages.
+3. En Source selecciona Deploy from a branch.
+4. Elige main y /root, luego Save.
+5. Abre el enlace publicado. En iPhone: Compartir > Añadir a pantalla de inicio.
+
+DATOS Y PRIVACIDAD
+Todos los datos se guardan en localStorage dentro del navegador. No hay servidor,
+cuenta, anuncios, analítica ni envío de información.
+
+NOTA
+Las cifras son estimaciones informativas para adultos y no sustituyen atención
+médica o nutricional individual.
