@@ -1,0 +1,18 @@
+FIT CALCULATOR PRO — v1.2.2
+
+CORRECCIÓN CRÍTICA
+La versión 1.2.1 cargaba el JavaScript antes de crear el selector visual de ejercicios.
+Eso generaba un error al iniciar y detenía toda la aplicación.
+
+CORREGIDO
+- JavaScript cargado al final del documento.
+- Selector visual disponible antes de conectar eventos.
+- Caché actualizada a v1.2.2.
+- URL del script con control de versión para evitar mezclar archivos antiguos.
+- Protección adicional ante errores de interfaz.
+
+ACTUALIZACIÓN RECOMENDADA
+1. Elimina todos los archivos anteriores del repositorio.
+2. Sube todos los archivos de este ZIP.
+3. Abre la dirección de GitHub Pages en Safari y recarga.
+4. Si la app está instalada, elimínala de la pantalla de inicio y vuelve a añadirla.
