@@ -1,16 +1,23 @@
 {
-  "name": "Fit Calculator Pro",
-  "short_name": "Fit",
-  "description": "Calculadora fitness integral con seguimiento nutricional y entrenamiento inteligente.",
-  "start_url": "./",
+  "name": "Nuestro Espacio v5.8",
+  "short_name": "Nuestro Espacio",
+  "description": "Organización financiera, mercado y despensa inteligente con doble unidad.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f3f6f4",
-  "theme_color": "#101b17",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#f4f1ea",
+  "theme_color": "#17211b",
   "orientation": "portrait-primary",
-  "lang": "es",
+  "lang": "es-PE",
   "categories": [
-    "health",
-    "fitness",
+    "finance",
+    "productivity",
     "lifestyle"
   ],
   "icons": [
@@ -18,13 +25,43 @@
       "src": "icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Agregar compra",
+      "short_name": "Compra",
+      "url": "./index.html#market",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ver tareas",
+      "short_name": "Tareas",
+      "url": "./index.html#tasks",
+      "icons": [
+        {
+          "src": "icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
