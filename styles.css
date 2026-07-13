@@ -45,3 +45,68 @@ input,select{width:100%;height:48px;padding:0 13px;border:1px solid var(--line);
 @media(max-width:420px){main{padding:14px}.hero{padding:20px}.hero-ring{width:78px;height:78px;min-width:78px}.hero h1{font-size:24px}.form-card{padding:16px}.macro-card{gap:13px}.macro-chart{width:110px;height:110px}.result-hero strong{font-size:48px}}
 @media(max-width:355px){.form-grid{grid-template-columns:1fr}.field.wide{grid-column:auto}.metric-grid,.result-grid{grid-template-columns:1fr}.hero-ring{display:none}}
 @media(min-width:700px){body{padding:18px 0}.app-shell{border-radius:28px;overflow:hidden;box-shadow:0 20px 70px rgba(0,0,0,.12);background:var(--bg)}.bottom-nav{bottom:18px;border-radius:0 0 28px 28px}}
+
+
+/* v1.1.0 — spacing, protein tracking and training */
+.top-actions{display:flex;align-items:center;gap:8px}
+.view>*+*{margin-top:16px}
+.view>.section-head{margin-top:30px}
+.view>.page-title+*{margin-top:0}
+.card{isolation:isolate}
+.form-card,.chart-card,.result-hero,.macro-card,.projection,.notice,.settings-list,.about{margin-bottom:0}
+.form-card+.form-card{margin-top:18px}
+.result-grid+.section-head,.metric-grid+.section-head,.trend-grid+.section-head{margin-top:32px}
+#planContent>*+*{margin-top:14px}
+#planContent>.section-head{margin-top:30px;margin-bottom:12px}
+#planContent>.result-grid{margin-top:12px}
+.history-toolbar+.history-list{margin-top:14px}
+.training-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.training-kpis .result{min-width:0}
+.training-kpis strong{font-size:22px;overflow-wrap:anywhere}
+.workout-builder{overflow:visible}
+.smart-suggestion{margin:18px 0;padding:16px;border-radius:16px;background:var(--surface-2);border:1px solid var(--line)}
+.smart-suggestion>span{display:block;color:var(--accent);font-size:9px;font-weight:850;letter-spacing:.14em}
+.smart-suggestion strong{display:block;margin:5px 0 3px;font-size:15px}
+.smart-suggestion p{margin:0;color:var(--muted);font-size:11px}
+.sets-head,.set-row{display:grid;grid-template-columns:38px 1fr 1fr 1fr 32px;gap:8px;align-items:center}
+.sets-head{padding:0 3px 7px;color:var(--muted);font-size:9px;font-weight:800;text-align:center}
+.set-row{margin-bottom:9px}
+.set-number{width:32px;height:32px;border-radius:10px;background:var(--surface-2);display:grid;place-items:center;font-size:11px;font-weight:850}
+.set-row input{height:43px;padding:0 8px;text-align:center}
+.remove-set{width:32px;height:32px;border:0;border-radius:10px;background:transparent;color:var(--danger);font-size:19px}
+.add-set-btn{margin:5px 0 16px;min-height:43px}
+.workout-note{margin-bottom:16px}
+.chart-controls{padding:15px;margin-bottom:12px}
+.chart-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;background:var(--surface-2);padding:5px;border-radius:13px}
+.chart-tabs button{border:0;border-radius:9px;background:transparent;color:var(--muted);padding:9px 4px;font-size:10px;font-weight:800}
+.chart-tabs button.selected{background:var(--surface);color:var(--text);box-shadow:0 3px 10px rgba(0,0,0,.06)}
+.training-chart-card{margin-top:12px}
+.workout-item{padding:16px}
+.workout-item-header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.workout-item h3{font-size:14px;margin:0}
+.workout-item time{color:var(--muted);font-size:10px;white-space:nowrap}
+.workout-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+.workout-stats div{background:var(--surface-2);border-radius:11px;padding:9px;text-align:center}
+.workout-stats strong,.workout-stats small{display:block}
+.workout-stats strong{font-size:13px}.workout-stats small{font-size:9px;color:var(--muted)}
+.workout-sets{margin-top:10px;color:var(--muted);font-size:11px;line-height:1.6}
+.workout-delete{margin-top:9px;border:0;background:none;color:var(--danger);padding:0;font-size:10px;font-weight:750}
+.nutrition-log-card{margin-top:30px}
+.protein-target-line{display:flex;justify-content:space-between;align-items:center;margin:14px 0;padding:12px 14px;border-radius:13px;background:var(--surface-2);font-size:12px}
+.protein-target-line strong{color:var(--accent)}
+.protein-trends{margin-top:12px}
+@media(max-width:420px){
+  .view>*+*{margin-top:14px}
+  .view>.section-head{margin-top:27px}
+  .form-card+.form-card{margin-top:16px}
+  .training-kpis{gap:8px}
+  .training-kpis .result{padding:13px 10px}
+  .training-kpis strong{font-size:19px}
+  .sets-head,.set-row{grid-template-columns:31px minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) 27px;gap:5px}
+  .set-row input{font-size:13px;padding:0 4px}
+  .set-number,.remove-set{width:27px}
+}
+@media(max-width:360px){
+  .training-kpis{grid-template-columns:1fr}
+  .workout-stats{grid-template-columns:1fr 1fr}
+}

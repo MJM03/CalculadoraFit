@@ -1,24 +1,20 @@
-FIT CALCULATOR PRO — v1.0.0
+FIT CALCULATOR PRO — v1.1.0
 
-ARCHIVOS
-- index.html
-- styles.css
-- app.js
-- manifest.webmanifest
-- sw.js
-- icon-180.png / icon-192.png / icon-512.png
+NOVEDADES
+- Corrección general de separación entre tarjetas y contenedores.
+- Seguimiento diario de proteína con objetivo, promedio y adherencia.
+- Gráficos de evolución de peso y proteína.
+- Módulo de entrenamiento con ejercicios, series, peso, repeticiones y RIR.
+- Sobrecarga progresiva inteligente mediante doble progresión.
+- Gráficos de 1RM estimado, volumen y peso máximo.
+- Historial de sesiones y récords por ejercicio.
+- PWA, modo oscuro, CSV, respaldo JSON y funcionamiento sin conexión.
 
 PUBLICAR EN GITHUB PAGES
-1. Sube todos los archivos a la raíz del repositorio.
-2. Ve a Settings > Pages.
-3. En Source selecciona Deploy from a branch.
-4. Elige main y /root, luego Save.
-5. Abre el enlace publicado. En iPhone: Compartir > Añadir a pantalla de inicio.
+Sube todos los archivos del ZIP a la raíz del repositorio y reemplaza los anteriores.
+Luego abre la web actualizada y recarga. Si la versión instalada conserva archivos
+antiguos, ciérrala por completo y vuelve a abrirla; el Service Worker actualizará
+la caché a v1.1.0.
 
-DATOS Y PRIVACIDAD
-Todos los datos se guardan en localStorage dentro del navegador. No hay servidor,
-cuenta, anuncios, analítica ni envío de información.
-
-NOTA
-Las cifras son estimaciones informativas para adultos y no sustituyen atención
-médica o nutricional individual.
+PRIVACIDAD
+Toda la información permanece en el dispositivo mediante localStorage.

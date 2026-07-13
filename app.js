@@ -2,7 +2,7 @@
 'use strict';
 
 const KEY='fitCalculatorPro.v1';
-const defaultState={profile:null,plan:null,measurements:[],theme:'auto'};
+const defaultState={profile:null,plan:null,measurements:[],proteinLogs:[],workouts:[],theme:'auto'};
 let state=loadState();
 let deferredPrompt=null;
 
@@ -12,6 +12,25 @@ const num=(id)=>{const v=parseFloat($('#'+id).value);return Number.isFinite(v)?v
 const round=(v,d=0)=>Number(v.toFixed(d));
 const fmt=(v,d=0)=>Number(v).toLocaleString('es-PE',{minimumFractionDigits:d,maximumFractionDigits:d});
 const today=()=>new Date().toISOString().slice(0,10);
+
+const EXERCISES={
+ press_banca:{name:'Press de banca',step:2.5},press_inclinado:{name:'Press inclinado',step:2.5},fondos:{name:'Fondos',step:2.5},
+ remo_barra:{name:'Remo con barra',step:2.5},jalon_pecho:{name:'Jalón al pecho',step:5},dominadas:{name:'Dominadas',step:2.5},
+ sentadilla:{name:'Sentadilla',step:5},peso_muerto:{name:'Peso muerto',step:5},prensa:{name:'Prensa de piernas',step:5},hip_thrust:{name:'Hip thrust',step:5},
+ press_militar:{name:'Press militar',step:2.5},curl_biceps:{name:'Curl de bíceps',step:1},extension_triceps:{name:'Extensión de tríceps',step:1}
+};
+let trainingMetric='e1rm';
+const e1rm=(weight,reps)=>weight>0&&reps>0?weight*(1+reps/30):0;
+const sessionStats=w=>{
+ const valid=(w.sets||[]).filter(s=>s.weight>=0&&s.reps>0);
+ return{
+   volume:valid.reduce((a,s)=>a+s.weight*s.reps,0),
+   topWeight:valid.reduce((a,s)=>Math.max(a,s.weight),0),
+   e1rm:valid.reduce((a,s)=>Math.max(a,e1rm(s.weight,s.reps)),0),
+   avgRir:valid.length?valid.reduce((a,s)=>a+s.rir,0)/valid.length:0
+ };
+};
+
 
 function loadState(){try{return {...defaultState,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return {...defaultState}}}
 function saveState(){localStorage.setItem(KEY,JSON.stringify(state))}
@@ -33,7 +52,7 @@ function showView(name){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));
   $$('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
   scrollTo({top:0,behavior:'smooth'});
-  if(name==='home'||name==='progress')requestAnimationFrame(renderCharts);
+  if(name==='home'||name==='progress'||name==='training')requestAnimationFrame(renderCharts);
   if(name==='history')renderHistory();
 }
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
@@ -119,7 +138,7 @@ function hydrateForm(){
 }
 
 function renderAll(){
- renderHome();renderPlan();renderHistory();renderProgress();renderCharts();hydrateForm();
+ renderHome();renderPlan();renderHistory();renderProgress();renderTraining();renderCharts();hydrateForm();
 }
 function renderHome(){
  const p=state.profile,r=state.plan;
@@ -154,14 +173,94 @@ function renderPlan(){
 }
 function renderProgress(){
  $('#progressDate').value=$('#progressDate').value||today();if(state.profile&&!$('#progressWeight').value)$('#progressWeight').value=state.profile.weight||'';
- const a=[...state.measurements].sort((x,y)=>x.date.localeCompare(y.date));if(a.length<2){setText('trendTotal','—');setText('trendWeekly','—');return}
+ const a=[...state.measurements].sort((x,y)=>x.date.localeCompare(y.date));
+ if(a.length<2){setText('trendTotal','—');setText('trendWeekly','—')}
+ else {
  const first=a[0],last=a.at(-1),diff=last.weight-first.weight,days=Math.max(1,(new Date(last.date)-new Date(first.date))/86400000);
  setText('trendTotal',`${diff>0?'+':''}${fmt(diff,1)} kg`);setText('trendWeekly',`${diff/days*7>0?'+':''}${fmt(diff/days*7,2)} kg`);
+ }
+ const logs=state.proteinLogs||[],target=state.plan?.protein||null;
+ setText('proteinTargetDisplay',target?fmt(target)+' g/día':'Calcula tu plan');
+ if(logs.length){
+   const avg=logs.reduce((a,x)=>a+x.grams,0)/logs.length;
+   const adherence=target?logs.filter(x=>x.grams>=target*.9).length/logs.length*100:null;
+   setText('proteinAverage',fmt(avg)+' g');setText('proteinAdherence',adherence!==null?fmt(adherence)+' %':'—');
+ }else{setText('proteinAverage','—');setText('proteinAdherence','—')}
 }
 $('#progressForm').addEventListener('submit',e=>{
  e.preventDefault();const date=$('#progressDate').value,weight=num('progressWeight');if(!date||!weight){toast('Fecha y peso son obligatorios');return}
  const item={id:crypto.randomUUID?.()||Date.now().toString(),date,weight,waist:num('progressWaist'),fat:num('progressFat'),note:$('#progressNote').value.trim()};
  state.measurements.push(item);state.measurements.sort((a,b)=>a.date.localeCompare(b.date));saveState();e.target.reset();$('#progressDate').value=today();renderAll();toast('Medición guardada');
+});
+
+
+$('#proteinForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const date=$('#proteinDate').value,grams=num('proteinActual');
+ if(!date||grams===null||grams<0){toast('Ingresa una fecha y una cantidad válida');return}
+ const existing=(state.proteinLogs||[]).find(x=>x.date===date);
+ const item={id:existing?.id||crypto.randomUUID?.()||Date.now().toString(),date,grams,note:$('#proteinNote').value.trim(),target:state.plan?.protein||null};
+ state.proteinLogs=(state.proteinLogs||[]).filter(x=>x.date!==date);
+ state.proteinLogs.push(item);state.proteinLogs.sort((a,b)=>a.date.localeCompare(b.date));
+ saveState();e.target.reset();$('#proteinDate').value=today();renderAll();toast(existing?'Proteína actualizada':'Proteína guardada');
+});
+
+function addSet(values={weight:'',reps:'',rir:2}){
+ const list=$('#setsList'),row=document.createElement('div');row.className='set-row';
+ row.innerHTML=`<span class="set-number">${list.children.length+1}</span><input class="set-weight" type="number" inputmode="decimal" min="0" max="1000" step="0.5" placeholder="kg" value="${values.weight}"><input class="set-reps" type="number" inputmode="numeric" min="1" max="100" placeholder="reps" value="${values.reps}"><input class="set-rir" type="number" inputmode="numeric" min="0" max="10" value="${values.rir}"><button type="button" class="remove-set" aria-label="Eliminar serie">×</button>`;
+ row.querySelector('.remove-set').addEventListener('click',()=>{row.remove();renumberSets()});
+ list.appendChild(row);
+}
+function renumberSets(){$$('.set-number',$('#setsList')).forEach((x,i)=>x.textContent=i+1)}
+function latestWorkout(exercise){
+ return [...(state.workouts||[])].filter(w=>w.exercise===exercise).sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt))[0]||null;
+}
+function smartRecommendation(exercise,range){
+ const last=latestWorkout(exercise),box=$('#smartSuggestion'),[low,high]=range.split('-').map(Number),step=EXERCISES[exercise]?.step||2.5;
+ if(!last){box.innerHTML='<span>RECOMENDACIÓN INTELIGENTE</span><strong>Registra tu primera sesión</strong><p>Usa una carga que te permita terminar el rango con 2–3 repeticiones en reserva.</p>';return}
+ const stats=sessionStats(last),sets=last.sets.filter(s=>s.reps>0),allTop=sets.length&&sets.every(s=>s.reps>=high),avgReps=sets.reduce((a,s)=>a+s.reps,0)/Math.max(1,sets.length);
+ let title,detail;
+ if(allTop&&stats.avgRir>=1.5){title=`Prueba ${fmt(stats.topWeight+step,1)} kg`;detail=`Completaste el rango alto con RIR ${fmt(stats.avgRir,1)}. Sube ${fmt(step,1)} kg y vuelve al extremo bajo del rango.`}
+ else if(avgReps<low||stats.avgRir<.5){title=`Mantén o baja a ${fmt(Math.max(0,stats.topWeight-step),1)} kg`;detail='El rendimiento quedó por debajo del rango o muy cerca del fallo. Prioriza técnica y recuperación.'}
+ else{title=`Mantén ${fmt(stats.topWeight,1)} kg`;detail=`Intenta sumar 1 repetición total antes de aumentar la carga. Último 1RM estimado: ${fmt(stats.e1rm,1)} kg.`}
+ box.innerHTML=`<span>RECOMENDACIÓN INTELIGENTE</span><strong>${title}</strong><p>${detail}</p>`;
+}
+function populateTrainingSelect(){
+ const chart=$('#trainingChartExercise'),current=chart.value;
+ chart.innerHTML=Object.entries(EXERCISES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
+ chart.value=current&&EXERCISES[current]?current:$('#exerciseSelect').value;
+}
+function renderTraining(){
+ state.workouts=state.workouts||[];
+ const stats=state.workouts.map(sessionStats);
+ setText('trainingSessions',state.workouts.length);
+ setText('trainingVolume',fmt(stats.reduce((a,x)=>a+x.volume,0)));
+ const prs=new Set();
+ Object.keys(EXERCISES).forEach(ex=>{const vals=state.workouts.filter(w=>w.exercise===ex).map(sessionStats).map(x=>x.e1rm);if(vals.length&&Math.max(...vals)>0)prs.add(ex)});
+ setText('trainingPrs',prs.size);
+ populateTrainingSelect();
+ smartRecommendation($('#exerciseSelect').value,$('#repRange').value);
+ const list=$('#workoutHistory');list.innerHTML='';
+ const items=[...state.workouts].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt)).slice(0,12);
+ $('#workoutEmpty').hidden=items.length>0;
+ items.forEach(w=>{
+   const s=sessionStats(w),el=document.createElement('article');el.className='workout-item card';
+   el.innerHTML=`<div class="workout-item-header"><div><h3>${EXERCISES[w.exercise]?.name||w.exercise}</h3><small>${escapeHtml(w.note||'Sin nota')}</small></div><time>${new Date(w.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}</time></div><div class="workout-stats"><div><strong>${fmt(s.e1rm,1)} kg</strong><small>1RM estimado</small></div><div><strong>${fmt(s.volume)} kg</strong><small>Volumen</small></div><div><strong>${fmt(s.avgRir,1)}</strong><small>RIR medio</small></div></div><div class="workout-sets">${w.sets.map((x,i)=>`S${i+1}: ${fmt(x.weight,1)} kg × ${x.reps} · RIR ${x.rir}`).join(' &nbsp;|&nbsp; ')}</div><button class="workout-delete" data-workout-delete="${w.id}">Eliminar sesión</button>`;
+   list.appendChild(el);
+ });
+ $$('[data-workout-delete]',list).forEach(b=>b.addEventListener('click',()=>{state.workouts=state.workouts.filter(x=>x.id!==b.dataset.workoutDelete);saveState();renderAll();toast('Sesión eliminada')}));
+}
+$('#addSetBtn').addEventListener('click',()=>addSet());
+$('#exerciseSelect').addEventListener('change',()=>{smartRecommendation($('#exerciseSelect').value,$('#repRange').value);$('#trainingChartExercise').value=$('#exerciseSelect').value;renderCharts()});
+$('#repRange').addEventListener('change',()=>smartRecommendation($('#exerciseSelect').value,$('#repRange').value));
+$('#trainingChartExercise').addEventListener('change',renderCharts);
+$$('#trainingMetricTabs button').forEach(b=>b.addEventListener('click',()=>{$$('#trainingMetricTabs button').forEach(x=>x.classList.toggle('selected',x===b));trainingMetric=b.dataset.metric;renderCharts()}));
+$('#saveWorkoutBtn').addEventListener('click',()=>{
+ const exercise=$('#exerciseSelect').value,date=$('#workoutDate').value;
+ const sets=$$('.set-row',$('#setsList')).map(row=>({weight:parseFloat($('.set-weight',row).value)||0,reps:parseInt($('.set-reps',row).value)||0,rir:Math.max(0,Math.min(10,parseFloat($('.set-rir',row).value)||0))})).filter(s=>s.reps>0);
+ if(!date||!exercise||!sets.length){toast('Completa la fecha y al menos una serie');return}
+ state.workouts.push({id:crypto.randomUUID?.()||Date.now().toString(),date,exercise,repRange:$('#repRange').value,sets,note:$('#workoutNote').value.trim(),createdAt:new Date().toISOString()});
+ saveState();$('#setsList').innerHTML='';sets.slice(0,Math.min(3,sets.length)).forEach(s=>addSet({weight:s.weight,reps:'',rir:2}));$('#workoutNote').value='';renderAll();toast('Entrenamiento guardado');
 });
 
 function renderHistory(){
@@ -171,21 +270,32 @@ function renderHistory(){
 }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
-function drawChart(canvas,emptyId){
- const items=[...state.measurements].sort((a,b)=>a.date.localeCompare(b.date));const empty=$('#'+emptyId);empty.style.display=items.length<2?'grid':'none';if(items.length<2)return;
+function drawSeriesChart(canvas,emptyId,items,valueGetter,options={}){
+ const clean=[...items].sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>Number.isFinite(valueGetter(x)));
+ const empty=$('#'+emptyId);empty.style.display=clean.length<2?'grid':'none';if(clean.length<2)return;
  const ctx=canvas.getContext('2d'),rect=canvas.getBoundingClientRect(),dpr=devicePixelRatio||1;canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;ctx.scale(dpr,dpr);
- const w=rect.width,h=rect.height,p={l:34,r:12,t:18,b:30};ctx.clearRect(0,0,w,h);
- const vals=items.map(x=>x.weight),min=Math.min(...vals)-1,max=Math.max(...vals)+1,range=max-min||1;
+ const w=rect.width,h=rect.height,p={l:38,r:12,t:18,b:30};ctx.clearRect(0,0,w,h);
+ const vals=clean.map(valueGetter),target=options.target||null,minBase=Math.min(...vals,target??Infinity),maxBase=Math.max(...vals,target??-Infinity),padding=Math.max(1,(maxBase-minBase)*.15);
+ const min=Math.max(0,minBase-padding),max=maxBase+padding,range=max-min||1;
  const css=getComputedStyle(document.documentElement),line=css.getPropertyValue('--line').trim(),muted=css.getPropertyValue('--muted').trim(),accent=css.getPropertyValue('--accent').trim(),surface=css.getPropertyValue('--surface').trim();
  ctx.font='10px system-ui';ctx.textAlign='right';ctx.fillStyle=muted;ctx.strokeStyle=line;ctx.lineWidth=1;
- for(let i=0;i<4;i++){const y=p.t+(h-p.t-p.b)*i/3,val=max-range*i/3;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText(fmt(val,1),p.l-7,y+3)}
- const pts=items.map((x,i)=>({x:p.l+(w-p.l-p.r)*(items.length===1?.5:i/(items.length-1)),y:p.t+(max-x.weight)/range*(h-p.t-p.b)}));
+ for(let i=0;i<4;i++){const y=p.t+(h-p.t-p.b)*i/3,val=max-range*i/3;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText(fmt(val,options.decimals||0),p.l-7,y+3)}
+ if(target){const y=p.t+(max-target)/range*(h-p.t-p.b);ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.strokeStyle=muted;ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=muted;ctx.textAlign='left';ctx.fillText('Meta',p.l+4,y-5)}
+ const pts=clean.map((x,i)=>({x:p.l+(w-p.l-p.r)*(clean.length===1?.5:i/(clean.length-1)),y:p.t+(max-valueGetter(x))/range*(h-p.t-p.b)}));
  ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.lineTo(pts.at(-1).x,h-p.b);ctx.lineTo(pts[0].x,h-p.b);ctx.closePath();const grad=ctx.createLinearGradient(0,p.t,0,h-p.b);grad.addColorStop(0,accent+'44');grad.addColorStop(1,accent+'00');ctx.fillStyle=grad;ctx.fill();
  ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.strokeStyle=accent;ctx.lineWidth=3;ctx.lineJoin='round';ctx.stroke();
  pts.forEach(q=>{ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle=surface;ctx.fill();ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.stroke()});
- ctx.fillStyle=muted;ctx.textAlign='center';const labels=[0,Math.floor((items.length-1)/2),items.length-1].filter((v,i,a)=>a.indexOf(v)===i);labels.forEach(i=>ctx.fillText(new Date(items[i].date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'}),pts[i].x,h-8));
+ ctx.fillStyle=muted;ctx.textAlign='center';const labels=[0,Math.floor((clean.length-1)/2),clean.length-1].filter((v,i,a)=>a.indexOf(v)===i);labels.forEach(i=>ctx.fillText(new Date(clean[i].date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'}),pts[i].x,h-8));
 }
-function renderCharts(){drawChart($('#weightChart'),'emptyChart');drawChart($('#progressChart'),'emptyProgressChart')}
+function renderCharts(){
+ drawSeriesChart($('#weightChart'),'emptyChart',state.measurements,x=>x.weight,{decimals:1});
+ drawSeriesChart($('#progressChart'),'emptyProgressChart',state.measurements,x=>x.weight,{decimals:1});
+ drawSeriesChart($('#proteinChart'),'emptyProteinChart',state.proteinLogs||[],x=>x.grams,{target:state.plan?.protein||null});
+ drawSeriesChart($('#progressProteinChart'),'emptyProgressProteinChart',state.proteinLogs||[],x=>x.grams,{target:state.plan?.protein||null});
+ const exercise=$('#trainingChartExercise')?.value||$('#exerciseSelect')?.value;
+ const sessions=(state.workouts||[]).filter(w=>w.exercise===exercise);
+ drawSeriesChart($('#trainingChart'),'emptyTrainingChart',sessions,w=>sessionStats(w)[trainingMetric],{decimals:trainingMetric==='volume'?0:1});
+}
 addEventListener('resize',()=>{clearTimeout(window._resize);window._resize=setTimeout(renderCharts,150)});
 
 function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -208,5 +318,7 @@ $('#installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;de
 
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(state.theme==='auto')applyTheme()});
+$('#proteinDate').value=today();$('#workoutDate').value=today();
+if(!$('#setsList').children.length){addSet();addSet();addSet()}
 applyTheme();hydrateForm();renderAll();renderProgress();
 })();

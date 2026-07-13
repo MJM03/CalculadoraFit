@@ -12,18 +12,23 @@
   <link rel="apple-touch-icon" href="icon-180.png">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
-  <title>Fit Calculator Pro</title>
+  <title>Fit Calculator Pro · Entrenamiento</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true"><span>F</span></div>
-        <div><strong>Fit Calculator</strong><small>PRO · v1.0.0</small></div>
+        <div><strong>Fit Calculator</strong><small>PRO · v1.1.0</small></div>
       </div>
-      <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema" title="Cambiar tema">
-        <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.91-.1-1.35A7 7 0 0 1 13.35 3.1C12.91 3.04 12.46 3 12 3Z"/></svg>
-      </button>
+      <div class="top-actions">
+        <button class="icon-btn" id="themeBtn" aria-label="Cambiar tema" title="Cambiar tema">
+          <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.91-.1-1.35A7 7 0 0 1 13.35 3.1C12.91 3.04 12.46 3 12 3Z"/></svg>
+        </button>
+        <button class="icon-btn" data-go="settings" aria-label="Abrir ajustes" title="Ajustes">
+          <svg viewBox="0 0 24 24"><path d="m19.4 13 .1-1-.1-1 2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 3.5h-4L10.7 6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5-.1 1 .1 1-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg>
+        </button>
+      </div>
     </header>
 
     <main>
@@ -59,6 +64,12 @@
         <div class="chart-card card">
           <canvas id="weightChart" height="210" aria-label="Gráfico de evolución de peso"></canvas>
           <div id="emptyChart" class="empty-state">Registra al menos dos mediciones para ver tu tendencia.</div>
+        </div>
+
+        <div class="section-head"><div><span class="eyebrow">NUTRICIÓN</span><h2>Evolución de proteína</h2></div><button class="text-btn" data-go="progress">Registrar</button></div>
+        <div class="chart-card card">
+          <canvas id="proteinChart" height="210" aria-label="Gráfico de evolución de proteína"></canvas>
+          <div id="emptyProteinChart" class="empty-state">Registra al menos dos consumos de proteína para ver tu evolución.</div>
         </div>
       </section>
 
@@ -161,6 +172,87 @@
         </div>
       </section>
 
+
+      <section class="view" id="view-training">
+        <div class="page-title"><span class="eyebrow">ENTRENAMIENTO</span><h1>Entrenamiento inteligente</h1><p>Registra series reales y recibe una progresión basada en rendimiento, repeticiones y esfuerzo.</p></div>
+
+        <div class="training-kpis">
+          <article class="result card"><span>Sesiones</span><strong id="trainingSessions">0</strong><small>registradas</small></article>
+          <article class="result card"><span>Volumen total</span><strong id="trainingVolume">0</strong><small>kg acumulados</small></article>
+          <article class="result card"><span>Récords</span><strong id="trainingPrs">0</strong><small>mejores marcas</small></article>
+        </div>
+
+        <article class="card form-card workout-builder">
+          <div class="card-title"><span class="step">▶</span><div><h2>Nueva sesión</h2><p>Elige un ejercicio y registra cada serie.</p></div></div>
+          <div class="form-grid">
+            <label class="field wide"><span>Ejercicio*</span>
+              <select id="exerciseSelect">
+                <optgroup label="Pecho">
+                  <option value="press_banca">Press de banca</option>
+                  <option value="press_inclinado">Press inclinado</option>
+                  <option value="fondos">Fondos</option>
+                </optgroup>
+                <optgroup label="Espalda">
+                  <option value="remo_barra">Remo con barra</option>
+                  <option value="jalon_pecho">Jalón al pecho</option>
+                  <option value="dominadas">Dominadas</option>
+                </optgroup>
+                <optgroup label="Piernas">
+                  <option value="sentadilla">Sentadilla</option>
+                  <option value="peso_muerto">Peso muerto</option>
+                  <option value="prensa">Prensa de piernas</option>
+                  <option value="hip_thrust">Hip thrust</option>
+                </optgroup>
+                <optgroup label="Hombros y brazos">
+                  <option value="press_militar">Press militar</option>
+                  <option value="curl_biceps">Curl de bíceps</option>
+                  <option value="extension_triceps">Extensión de tríceps</option>
+                </optgroup>
+              </select>
+            </label>
+            <label class="field"><span>Fecha*</span><input id="workoutDate" type="date"></label>
+            <label class="field"><span>Objetivo de repeticiones</span>
+              <select id="repRange">
+                <option value="3-5">Fuerza · 3–5</option>
+                <option value="6-8">Fuerza/masa · 6–8</option>
+                <option value="8-12" selected>Hipertrofia · 8–12</option>
+                <option value="12-15">Resistencia · 12–15</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="smart-suggestion" id="smartSuggestion">
+            <span>RECOMENDACIÓN INTELIGENTE</span>
+            <strong>Registra tu primera sesión</strong>
+            <p>Después compararemos rendimiento, RIR y volumen para sugerir la siguiente carga.</p>
+          </div>
+
+          <div class="sets-head"><span>Serie</span><span>Peso</span><span>Reps</span><span>RIR</span><span></span></div>
+          <div id="setsList" class="sets-list"></div>
+          <button type="button" class="secondary-btn add-set-btn" id="addSetBtn">+ Añadir serie</button>
+          <label class="field wide workout-note"><span>Nota de sesión</span><input id="workoutNote" maxlength="120" placeholder="Técnica, molestias, sensaciones..."></label>
+          <button type="button" class="primary-btn" id="saveWorkoutBtn">Guardar entrenamiento</button>
+        </article>
+
+        <div class="section-head"><div><span class="eyebrow">FUERZA</span><h2>Evolución del ejercicio</h2></div></div>
+        <article class="card chart-controls">
+          <label class="field"><span>Ejercicio del gráfico</span><select id="trainingChartExercise"></select></label>
+          <div class="chart-tabs" id="trainingMetricTabs">
+            <button class="selected" data-metric="e1rm">1RM estimado</button>
+            <button data-metric="volume">Volumen</button>
+            <button data-metric="topWeight">Peso máximo</button>
+          </div>
+        </article>
+        <div class="chart-card card tall training-chart-card">
+          <canvas id="trainingChart" height="260"></canvas>
+          <div id="emptyTrainingChart" class="empty-state">Registra dos sesiones del mismo ejercicio para ver su evolución.</div>
+        </div>
+
+        <div class="section-head"><div><span class="eyebrow">HISTORIAL</span><h2>Sesiones recientes</h2></div></div>
+        <div id="workoutHistory" class="history-list"></div>
+        <div id="workoutEmpty" class="card empty-panel"><div>🏋</div><h2>Sin entrenamientos</h2><p>Tu primera sesión aparecerá aquí.</p></div>
+      </section>
+
       <section class="view" id="view-progress">
         <div class="page-title"><span class="eyebrow">SEGUIMIENTO</span><h1>Tu progreso</h1><p>Registra mediciones consistentes para observar tendencias.</p></div>
         <article class="card form-card">
@@ -182,6 +274,25 @@
           <article class="result card"><span>Cambio total</span><strong id="trendTotal">—</strong><small>desde el primer registro</small></article>
           <article class="result card"><span>Promedio semanal</span><strong id="trendWeekly">—</strong><small>tendencia aproximada</small></article>
         </div>
+
+        <article class="card form-card nutrition-log-card">
+          <div class="card-title"><span class="step">P</span><div><h2>Proteína diaria</h2><p>Registra el consumo real para compararlo con tu objetivo.</p></div></div>
+          <form id="proteinForm">
+            <div class="form-grid">
+              <label class="field"><span>Fecha*</span><input id="proteinDate" type="date" required></label>
+              <label class="field"><span>Proteína consumida*</span><div class="input-unit"><input id="proteinActual" type="number" inputmode="decimal" min="0" max="600" step="1" required><b>g</b></div></label>
+              <label class="field wide"><span>Nota</span><input id="proteinNote" maxlength="100" placeholder="Ej.: día de entrenamiento"></label>
+            </div>
+            <div class="protein-target-line"><span>Objetivo actual</span><strong id="proteinTargetDisplay">—</strong></div>
+            <button class="primary-btn" type="submit">Guardar proteína</button>
+          </form>
+        </article>
+        <div class="section-head"><div><span class="eyebrow">NUTRICIÓN</span><h2>Evolución de proteína</h2></div></div>
+        <div class="chart-card card tall"><canvas id="progressProteinChart" height="260"></canvas><div id="emptyProgressProteinChart" class="empty-state">Aún no hay suficientes registros de proteína.</div></div>
+        <div class="trend-grid protein-trends">
+          <article class="result card"><span>Promedio</span><strong id="proteinAverage">—</strong><small>consumo registrado</small></article>
+          <article class="result card"><span>Adherencia</span><strong id="proteinAdherence">—</strong><small>días que alcanzaste la meta</small></article>
+        </div>
       </section>
 
       <section class="view" id="view-history">
@@ -202,7 +313,7 @@
           <label class="settings-file"><span><b>Importar respaldo</b><small>Restaurar desde archivo JSON</small></span><em>›</em><input type="file" id="importJson" accept=".json,application/json"></label>
           <button id="resetBtn" class="danger-row"><span><b>Borrar todos los datos</b><small>Perfil, plan e historial</small></span><em>›</em></button>
         </article>
-        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.0.0 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
+        <article class="card about"><div class="brand-mark large"><span>F</span></div><h2>Fit Calculator Pro</h2><p>Versión 1.1.0 · Aplicación privada, sin anuncios ni rastreadores.</p><small>Funciona sin conexión después de la primera carga.</small></article>
       </section>
     </main>
 
@@ -211,7 +322,7 @@
       <button data-view="calculator"><svg viewBox="0 0 24 24"><path d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm1 3v4h8V6H8Zm0 7h2v2H8v-2Zm3 0h2v2h-2v-2Zm3 0h2v5h-2v-5Zm-6 3h2v2H8v-2Zm3 0h2v2h-2v-2Z"/></svg><span>Calcular</span></button>
       <button data-view="plan"><svg viewBox="0 0 24 24"><path d="M4 4h16v4H4V4Zm0 6h7v10H4V10Zm9 0h7v4h-7v-4Zm0 6h7v4h-7v-4Z"/></svg><span>Plan</span></button>
       <button data-view="progress"><svg viewBox="0 0 24 24"><path d="M4 19V5h2v11.1l4.4-4.4 3 3L19.6 8H16V6h7v7h-2V9.4l-7.6 8.3-3-3L6.8 19H4Z"/></svg><span>Progreso</span></button>
-      <button data-view="settings"><svg viewBox="0 0 24 24"><path d="m19.4 13 .1-1-.1-1 2-1.5-2-3.4-2.4 1a8 8 0 0 0-1.7-1L15 3.5h-4L10.7 6a8 8 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5-.1 1 .1 1-2 1.5 2 3.4 2.4-1a8 8 0 0 0 1.7 1l.3 2.6h4l.3-2.6a8 8 0 0 0 1.7-1l2.4 1 2-3.4-2-1.5ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg><span>Ajustes</span></button>
+      <button data-view="training"><svg viewBox="0 0 24 24"><path d="M2 9h3V7h2v10H5v-2H2V9Zm20 0h-3V7h-2v10h2v-2h3V9ZM9 10h6v4H9v-4Z"/></svg><span>Entrenar</span></button>
     </nav>
   </div>
 
