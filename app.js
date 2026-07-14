@@ -237,26 +237,18 @@ let selectedExerciseId=null, editingSplitId=null, draftSplit=null, trainingTab='
 
 function demoFor(ex){return `demo-${EXERCISES[ex]?.pattern||'machine'}.gif`}
 
-const ATLAS_DEADLIFT_FRAMES=Array.from({length:16},(_,i)=>`deadlift_${String(i+1).padStart(2,'0')}.png`);
+const ATLAS_DEADLIFT_FRAMES=Array.from({length:8},(_,i)=>`deadlift_${String(i+1).padStart(2,'0')}.png`);
 const ATLAS_DEADLIFT_PHASES=[
  ['Posición inicial','Barra sobre el centro del pie y abdomen activo.'],
- ['Tensión','Elimina la holgura antes de despegar la barra.'],
- ['Inicio del empuje','Empuja el suelo manteniendo el pecho firme.'],
- ['Media tibia','Mantén la barra cerca de las piernas.'],
- ['Cerca de rodillas','Cadera y hombros suben coordinados.'],
- ['Extensión de cadera','Lleva la cadera hacia la barra sin hiperextender.'],
- ['Posición superior','Termina erguido y con glúteos activos.'],
- ['Pausa superior','Mantén una posición estable y neutral.'],
- ['Inicio del descenso','Lleva primero la cadera hacia atrás.'],
- ['Barra a rodillas','Desliza la barra cerca de los muslos.'],
- ['Cadera atrás','Conserva la tensión abdominal.'],
- ['Media tibia','Flexiona rodillas tras pasar la barra.'],
- ['Cerca del suelo','Controla el descenso; no sueltes la postura.'],
- ['Posición inicial','Reorganiza la postura sin perder neutralidad.'],
- ['Preparación','Respira, crea tensión y prepara otra repetición.'],
- ['Listo para repetir','Repite conservando el mismo patrón técnico.']
+ ['Inicio del empuje','Empuja el suelo manteniendo la barra cerca.'],
+ ['Extensión','Cadera y hombros ascienden coordinados.'],
+ ['Posición superior','Termina erguido sin hiperextender la espalda.'],
+ ['Pausa superior','Mantén glúteos y abdomen activos.'],
+ ['Descenso controlado','Lleva primero la cadera hacia atrás.'],
+ ['Barra a media pierna','Conserva la barra pegada al cuerpo.'],
+ ['Posición inicial','Apoya la barra y prepara otra repetición.']
 ];
-const ATLAS_DEADLIFT_DURATIONS=[300,190,125,100,95,105,170,320,145,120,120,130,155,230,210,250];
+const ATLAS_DEADLIFT_DURATIONS=[260,145,125,230,210,140,160,280];
 let atlasFrameIndex=0,atlasPlaying=false,atlasLastChange=0,atlasAnimationId=0;
 
 function renderAtlasFrame(){

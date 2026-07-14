@@ -28,3 +28,12 @@ VERSIÓN 1.2.4
 - Se eliminaron los controles visibles de Atlas.
 - La animación inicia automáticamente y se repite en bucle infinito.
 - Se actualizó la caché de la PWA para forzar la nueva versión.
+
+
+VERSIÓN 1.2.5 · ATLAS FINO FINAL
+- Nuevo modelo integrado en Peso muerto convencional.
+- Ocho cuadros optimizados: cuatro poses de subida y descenso invertido.
+- Sin números ni textos dentro de la animación.
+- Reproducción automática en bucle infinito.
+- Sin controles visibles.
+- Caché PWA renovada.
