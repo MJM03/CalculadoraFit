@@ -257,7 +257,7 @@ const ATLAS_DEADLIFT_PHASES=[
  ['Listo para repetir','Repite conservando el mismo patrón técnico.']
 ];
 const ATLAS_DEADLIFT_DURATIONS=[300,190,125,100,95,105,170,320,145,120,120,130,155,230,210,250];
-let atlasFrameIndex=0,atlasPlaying=false,atlasSpeed=1,atlasLastChange=0,atlasAnimationId=0;
+let atlasFrameIndex=0,atlasPlaying=false,atlasLastChange=0,atlasAnimationId=0;
 
 function renderAtlasFrame(){
  const img=$('#atlasFrame');if(!img)return;
@@ -269,18 +269,20 @@ function renderAtlasFrame(){
 }
 function setAtlasPlaying(value){
  atlasPlaying=value;
- const btn=$('#atlasPlay');if(btn){btn.textContent=value?'❚❚':'▶';btn.setAttribute('aria-label',value?'Pausar animación':'Reproducir animación')}
  atlasLastChange=performance.now();
 }
 function atlasLoop(now){
- if(atlasPlaying&&now-atlasLastChange>=ATLAS_DEADLIFT_DURATIONS[atlasFrameIndex]/atlasSpeed){
+ if(atlasPlaying&&now-atlasLastChange>=ATLAS_DEADLIFT_DURATIONS[atlasFrameIndex]){
   atlasFrameIndex=(atlasFrameIndex+1)%ATLAS_DEADLIFT_FRAMES.length;renderAtlasFrame();atlasLastChange=now;
  }
  atlasAnimationId=requestAnimationFrame(atlasLoop);
 }
 function startAtlasPlayer(){
- atlasFrameIndex=0;atlasSpeed=1;$('#atlasSpeed').value=1;setText('atlasSpeedOutput','1×');renderAtlasFrame();setAtlasPlaying(true);
- cancelAnimationFrame(atlasAnimationId);atlasAnimationId=requestAnimationFrame(atlasLoop);
+ atlasFrameIndex=0;
+ renderAtlasFrame();
+ setAtlasPlaying(true);
+ cancelAnimationFrame(atlasAnimationId);
+ atlasAnimationId=requestAnimationFrame(atlasLoop);
 }
 function stopAtlasPlayer(){setAtlasPlaying(false);cancelAnimationFrame(atlasAnimationId);atlasAnimationId=0}
 ATLAS_DEADLIFT_FRAMES.forEach(src=>{const img=new Image();img.src=src});
@@ -332,10 +334,6 @@ function closeExerciseModal(){stopAtlasPlayer();$('#exerciseModal').hidden=true}
 $$('[data-close-sheet]').forEach(x=>x.addEventListener('click',closeExerciseModal));
 $('#modalAddExerciseBtn').addEventListener('click',()=>{addExerciseToSession(selectedExerciseId);closeExerciseModal();setTrainingTab('session')});
 
-on('#atlasPlay','click',()=>setAtlasPlaying(!atlasPlaying));
-on('#atlasPrev','click',()=>{setAtlasPlaying(false);atlasFrameIndex=(atlasFrameIndex-1+ATLAS_DEADLIFT_FRAMES.length)%ATLAS_DEADLIFT_FRAMES.length;renderAtlasFrame()});
-on('#atlasNext','click',()=>{setAtlasPlaying(false);atlasFrameIndex=(atlasFrameIndex+1)%ATLAS_DEADLIFT_FRAMES.length;renderAtlasFrame()});
-on('#atlasSpeed','input',e=>{atlasSpeed=Number(e.target.value);setText('atlasSpeedOutput',`${atlasSpeed.toFixed(2).replace(/0$/,'').replace(/\.0$/,'')}×`)});
 
 
 function ensureSession(name='Entrenamiento libre'){

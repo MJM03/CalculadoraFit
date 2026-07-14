@@ -22,3 +22,9 @@ ACTUALIZACIÓN v1.2.3 ATLAS
 - Atlas Player integrado en Peso muerto convencional.
 - 16 fotogramas, reproducción, pausa, avance manual y velocidad.
 - Service Worker actualizado para forzar la nueva versión.
+
+
+VERSIÓN 1.2.4
+- Se eliminaron los controles visibles de Atlas.
+- La animación inicia automáticamente y se repite en bucle infinito.
+- Se actualizó la caché de la PWA para forzar la nueva versión.
