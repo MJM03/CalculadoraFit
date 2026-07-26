@@ -1,18 +1,12 @@
 {
-  "name": "Fit Calculator Pro",
-  "short_name": "Fit",
-  "description": "Calculadora fitness integral con seguimiento nutricional y entrenamiento inteligente.",
+  "name": "FORGE Performance OS",
+  "short_name": "FORGE",
+  "description": "Nutrición, entrenamiento, rutinas y progreso.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f3f6f4",
-  "theme_color": "#101b17",
-  "orientation": "portrait-primary",
+  "background_color": "#080b0d",
+  "theme_color": "#080b0d",
   "lang": "es",
-  "categories": [
-    "health",
-    "fitness",
-    "lifestyle"
-  ],
   "icons": [
     {
       "src": "icon-192.png",

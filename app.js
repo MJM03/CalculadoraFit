@@ -1,542 +1,105 @@
+
 (() => {
 'use strict';
-
-const KEY='fitCalculatorPro.v1';
-const defaultState={profile:null,plan:null,measurements:[],proteinLogs:[],workouts:[],splits:[],activeSplitId:null,activeSession:null,theme:'auto'};
-let state=loadState();
-let deferredPrompt=null;
-
-const $=(s,r=document)=>r.querySelector(s);
-const on=(selector,event,handler)=>{const el=typeof selector==='string'?$(selector):selector;if(el)el.addEventListener(event,handler);return el};
-const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const num=(id)=>{const v=parseFloat($('#'+id).value);return Number.isFinite(v)?v:null};
-const round=(v,d=0)=>Number(v.toFixed(d));
-const fmt=(v,d=0)=>Number(v).toLocaleString('es-PE',{minimumFractionDigits:d,maximumFractionDigits:d});
-const today=()=>new Date().toISOString().slice(0,10);
-
-const EXERCISES={"press_banca":{"name":"Press de banca","muscle":"Pecho","secondary":"Tríceps, hombro anterior","equipment":"Barra","pattern":"press","step":2.5,"instructions":"Apoya pies y espalda, baja la barra con control hacia la parte media del pecho y empuja sin perder tensión.","tip":"Mantén los omóplatos retraídos y evita abrir demasiado los codos."},"press_inclinado":{"name":"Press inclinado con barra","muscle":"Pecho","secondary":"Hombro anterior, tríceps","equipment":"Barra","pattern":"press","step":2.5,"instructions":"Ajusta el banco a 20–35°, baja la barra hacia la parte superior del pecho y empuja de forma estable.","tip":"Una inclinación excesiva desplaza trabajo hacia los hombros."},"press_mancuernas":{"name":"Press de pecho con mancuernas","muscle":"Pecho","secondary":"Tríceps, hombro anterior","equipment":"Mancuernas","pattern":"press","step":2,"instructions":"Baja las mancuernas junto al pecho manteniendo muñecas neutras y vuelve a extender.","tip":"No choques las mancuernas arriba; conserva tensión."},"aperturas_mancuernas":{"name":"Aperturas con mancuernas","muscle":"Pecho","secondary":"Hombro anterior","equipment":"Mancuernas","pattern":"press","step":1,"instructions":"Con codos levemente flexionados, abre los brazos hasta sentir estiramiento y vuelve cerrando en arco.","tip":"Usa menos peso que en un press y evita bajar en exceso."},"fondos":{"name":"Fondos en paralelas","muscle":"Pecho","secondary":"Tríceps, hombros","equipment":"Peso corporal","pattern":"pushup","step":2.5,"instructions":"Desciende flexionando codos y empuja hasta extenderlos sin perder control del tronco.","tip":"Inclínate ligeramente para más pecho; vertical para más tríceps."},"flexiones":{"name":"Flexiones","muscle":"Pecho","secondary":"Tríceps, core","equipment":"Peso corporal","pattern":"pushup","step":1,"instructions":"Mantén el cuerpo alineado, baja el pecho entre las manos y empuja el suelo.","tip":"Evita que la cadera caiga o se eleve."},"cruce_poleas":{"name":"Cruce de poleas","muscle":"Pecho","secondary":"Hombro anterior","equipment":"Polea","pattern":"machine","step":1,"instructions":"Con ligera inclinación, lleva las manos al frente describiendo un arco y controla la vuelta.","tip":"Piensa en acercar los bíceps, no solo las manos."},"dominadas":{"name":"Dominadas","muscle":"Espalda","secondary":"Bíceps, core","equipment":"Peso corporal","pattern":"pull","step":2.5,"instructions":"Desde suspensión activa, lleva el pecho hacia la barra y baja con control.","tip":"Inicia con depresión escapular antes de flexionar los codos."},"jalon_pecho":{"name":"Jalón al pecho","muscle":"Espalda","secondary":"Bíceps","equipment":"Polea","pattern":"pull","step":5,"instructions":"Tira de la barra hacia la parte alta del pecho manteniendo el torso estable.","tip":"Evita convertirlo en un remo inclinándote demasiado."},"remo_barra":{"name":"Remo con barra","muscle":"Espalda","secondary":"Bíceps, lumbar","equipment":"Barra","pattern":"row","step":2.5,"instructions":"Inclina el torso, lleva la barra hacia el abdomen y baja sin perder la posición.","tip":"Mantén la espalda neutra y no uses impulso excesivo."},"remo_mancuerna":{"name":"Remo con mancuerna","muscle":"Espalda","secondary":"Bíceps","equipment":"Mancuernas","pattern":"row","step":2,"instructions":"Apoya una mano, lleva el codo hacia la cadera y controla el descenso.","tip":"Evita rotar el tronco para levantar más peso."},"remo_cable":{"name":"Remo sentado en polea","muscle":"Espalda","secondary":"Bíceps","equipment":"Polea","pattern":"row","step":5,"instructions":"Tira del agarre hacia el abdomen, junta escápulas y vuelve extendiendo los brazos.","tip":"No balancees el torso hacia atrás."},"pullover_polea":{"name":"Pullover en polea","muscle":"Espalda","secondary":"Tríceps largo","equipment":"Polea","pattern":"pull","step":2.5,"instructions":"Con brazos casi rectos, lleva la barra desde arriba hasta los muslos.","tip":"Mantén costillas controladas para aislar dorsales."},"face_pull":{"name":"Face pull","muscle":"Hombros","secondary":"Espalda alta","equipment":"Polea","pattern":"row","step":1,"instructions":"Tira de la cuerda hacia la cara separando las manos y rotando externamente.","tip":"Prioriza control y rango, no carga."},"sentadilla":{"name":"Sentadilla trasera","muscle":"Cuádriceps","secondary":"Glúteos, core","equipment":"Barra","pattern":"squat","step":5,"instructions":"Desciende flexionando cadera y rodillas, mantén el pie completo apoyado y sube empujando el suelo.","tip":"Las rodillas pueden avanzar si permanecen alineadas con los pies."},"sentadilla_frontal":{"name":"Sentadilla frontal","muscle":"Cuádriceps","secondary":"Core, glúteos","equipment":"Barra","pattern":"squat","step":2.5,"instructions":"Sostén la barra al frente, baja con torso erguido y sube manteniendo codos altos.","tip":"Trabaja movilidad de tobillo y muñeca progresivamente."},"goblet_squat":{"name":"Sentadilla goblet","muscle":"Cuádriceps","secondary":"Glúteos, core","equipment":"Mancuernas","pattern":"squat","step":2,"instructions":"Sostén una mancuerna frente al pecho, baja entre las piernas y vuelve a extender.","tip":"Úsala para aprender profundidad y control."},"prensa":{"name":"Prensa de piernas","muscle":"Cuádriceps","secondary":"Glúteos","equipment":"Máquina","pattern":"machine","step":5,"instructions":"Baja la plataforma hasta un rango cómodo y empuja sin bloquear agresivamente las rodillas.","tip":"Evita despegar la zona lumbar del respaldo."},"zancadas":{"name":"Zancadas caminando","muscle":"Cuádriceps","secondary":"Glúteos","equipment":"Mancuernas","pattern":"lunge","step":2,"instructions":"Da un paso amplio, baja ambas rodillas y avanza manteniendo control.","tip":"Mantén la rodilla delantera alineada con el pie."},"bulgaras":{"name":"Sentadilla búlgara","muscle":"Cuádriceps","secondary":"Glúteos","equipment":"Mancuernas","pattern":"lunge","step":2,"instructions":"Apoya el pie trasero elevado y baja sobre la pierna delantera.","tip":"Ajusta la distancia para no perder equilibrio."},"extension_cuadriceps":{"name":"Extensión de cuádriceps","muscle":"Cuádriceps","secondary":"","equipment":"Máquina","pattern":"machine","step":2.5,"instructions":"Extiende las rodillas hasta contraer cuádriceps y baja controlando.","tip":"Alinea el eje de la máquina con la rodilla."},"peso_muerto":{"name":"Peso muerto convencional","muscle":"Isquiotibiales","secondary":"Glúteos, espalda","equipment":"Barra","pattern":"hinge","step":5,"instructions":"Empuja el suelo manteniendo la barra cerca del cuerpo y termina extendiendo cadera.","tip":"No conviertas el cierre en una hiperextensión lumbar."},"peso_muerto_rumano":{"name":"Peso muerto rumano","muscle":"Isquiotibiales","secondary":"Glúteos","equipment":"Barra","pattern":"hinge","step":2.5,"instructions":"Lleva la cadera atrás con rodillas suaves, baja la barra cerca de las piernas y vuelve apretando glúteos.","tip":"Detente cuando pierdas neutralidad o tensión posterior."},"curl_femoral":{"name":"Curl femoral tumbado","muscle":"Isquiotibiales","secondary":"","equipment":"Máquina","pattern":"machine","step":2.5,"instructions":"Flexiona las rodillas llevando los talones hacia los glúteos y vuelve lentamente.","tip":"Mantén la cadera pegada al banco."},"hip_thrust":{"name":"Hip thrust","muscle":"Glúteos","secondary":"Isquiotibiales","equipment":"Barra","pattern":"hinge","step":5,"instructions":"Extiende la cadera hasta alinear rodillas, cadera y hombros; baja con control.","tip":"Mira al frente y evita hiperextender la espalda."},"puente_gluteo":{"name":"Puente de glúteos","muscle":"Glúteos","secondary":"Isquiotibiales","equipment":"Peso corporal","pattern":"hinge","step":2.5,"instructions":"Desde el suelo, empuja con los pies y eleva la cadera apretando glúteos.","tip":"Mantén costillas abajo durante el cierre."},"abduccion_maquina":{"name":"Abducción en máquina","muscle":"Glúteos","secondary":"","equipment":"Máquina","pattern":"machine","step":2.5,"instructions":"Abre las piernas contra la resistencia y vuelve lentamente.","tip":"Evita rebotes y controla el final del recorrido."},"press_militar":{"name":"Press militar","muscle":"Hombros","secondary":"Tríceps","equipment":"Barra","pattern":"overhead","step":2.5,"instructions":"Empuja la barra sobre la cabeza manteniendo glúteos y abdomen activos.","tip":"La barra debe viajar cerca del rostro."},"press_hombro_mancuernas":{"name":"Press de hombro con mancuernas","muscle":"Hombros","secondary":"Tríceps","equipment":"Mancuernas","pattern":"overhead","step":2,"instructions":"Desde hombros, empuja las mancuernas arriba y baja con control.","tip":"No arquees la zona lumbar."},"elevaciones_laterales":{"name":"Elevaciones laterales","muscle":"Hombros","secondary":"","equipment":"Mancuernas","pattern":"lateral","step":1,"instructions":"Eleva los brazos hacia los lados hasta aproximadamente la altura del hombro.","tip":"Usa carga moderada y dirige con los codos."},"pajaros":{"name":"Pájaros / reverse fly","muscle":"Hombros","secondary":"Espalda alta","equipment":"Mancuernas","pattern":"lateral","step":1,"instructions":"Inclina el torso y abre los brazos hacia los lados manteniendo codos suaves.","tip":"Evita encoger los hombros."},"curl_biceps":{"name":"Curl de bíceps con barra","muscle":"Bíceps","secondary":"Antebrazo","equipment":"Barra","pattern":"curl","step":1,"instructions":"Flexiona los codos sin moverlos hacia delante y baja completamente.","tip":"Mantén el torso quieto."},"curl_mancuernas":{"name":"Curl alterno con mancuernas","muscle":"Bíceps","secondary":"Antebrazo","equipment":"Mancuernas","pattern":"curl","step":1,"instructions":"Flexiona un brazo a la vez girando la palma hacia arriba.","tip":"Evita balancear el cuerpo."},"curl_martillo":{"name":"Curl martillo","muscle":"Bíceps","secondary":"Braquial, antebrazo","equipment":"Mancuernas","pattern":"curl","step":1,"instructions":"Flexiona con agarre neutro manteniendo los codos pegados.","tip":"Controla especialmente la bajada."},"extension_triceps":{"name":"Extensión de tríceps en polea","muscle":"Tríceps","secondary":"","equipment":"Polea","pattern":"machine","step":1,"instructions":"Extiende los codos llevando la cuerda hacia abajo sin mover los brazos.","tip":"Separa ligeramente la cuerda al final."},"press_frances":{"name":"Press francés","muscle":"Tríceps","secondary":"","equipment":"Barra","pattern":"press","step":1,"instructions":"Flexiona los codos llevando la barra hacia la frente y vuelve a extender.","tip":"Mantén los codos apuntando hacia arriba."},"fondos_banco":{"name":"Fondos en banco","muscle":"Tríceps","secondary":"Hombros","equipment":"Peso corporal","pattern":"pushup","step":1,"instructions":"Baja el cuerpo cerca del banco y empuja extendiendo los codos.","tip":"No fuerces profundidad si molesta el hombro."},"gemelos_pie":{"name":"Elevación de gemelos de pie","muscle":"Pantorrillas","secondary":"","equipment":"Máquina","pattern":"machine","step":2.5,"instructions":"Sube sobre la punta de los pies y baja hasta sentir estiramiento.","tip":"Haz una pausa arriba y evita rebotes."},"gemelos_sentado":{"name":"Elevación de gemelos sentado","muscle":"Pantorrillas","secondary":"","equipment":"Máquina","pattern":"machine","step":2.5,"instructions":"Eleva los talones contra la carga y baja lentamente.","tip":"Busca rango completo."},"plancha":{"name":"Plancha frontal","muscle":"Core","secondary":"Hombros","equipment":"Peso corporal","pattern":"plank","step":1,"instructions":"Mantén cuerpo alineado apoyado en antebrazos y pies.","tip":"Aprieta glúteos y abdomen; no aguantes la respiración."},"crunch":{"name":"Crunch abdominal","muscle":"Core","secondary":"","equipment":"Peso corporal","pattern":"plank","step":1,"instructions":"Acerca costillas a pelvis elevando ligeramente el torso.","tip":"No tires del cuello."},"elevacion_piernas":{"name":"Elevación de piernas","muscle":"Core","secondary":"Flexores de cadera","equipment":"Peso corporal","pattern":"plank","step":1,"instructions":"Eleva las piernas manteniendo la zona lumbar controlada.","tip":"Reduce el rango si la espalda se arquea."},"pallof_press":{"name":"Pallof press","muscle":"Core","secondary":"Oblicuos","equipment":"Polea","pattern":"machine","step":1,"instructions":"Empuja el agarre al frente resistiendo la rotación del tronco.","tip":"Mantén pelvis y costillas alineadas."}};
-let trainingMetric='e1rm';
-const e1rm=(weight,reps)=>weight>0&&reps>0?weight*(1+reps/30):0;
-const sessionStats=w=>{
- const valid=(w.sets||[]).filter(s=>s.weight>=0&&s.reps>0);
- return{
-   volume:valid.reduce((a,s)=>a+s.weight*s.reps,0),
-   topWeight:valid.reduce((a,s)=>Math.max(a,s.weight),0),
-   e1rm:valid.reduce((a,s)=>Math.max(a,e1rm(s.weight,s.reps)),0),
-   avgRir:valid.length?valid.reduce((a,s)=>a+s.rir,0)/valid.length:0
- };
-};
-
-
-function loadState(){try{return {...defaultState,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return {...defaultState}}}
-function saveState(){localStorage.setItem(KEY,JSON.stringify(state))}
-function toast(msg){const el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2400)}
-window.addEventListener('error',e=>{console.error(e.error||e.message);const t=$('#toast');if(t){t.textContent='Ocurrió un error en la interfaz. Recarga la aplicación.';t.classList.add('show')}});
-function setText(id,val){const el=$('#'+id);if(el)el.textContent=val}
-
-function applyTheme(){
-  const useDark=state.theme==='dark'||(state.theme==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
-  document.documentElement.dataset.theme=useDark?'dark':'light';
-  setText('themeLabel',state.theme==='auto'?'Automática':state.theme==='dark'?'Oscura':'Clara');
-  const meta=$('meta[name=theme-color]');if(meta)meta.content=useDark?'#0c1411':'#101b17';
-  requestAnimationFrame(renderCharts);
-}
-function cycleTheme(){
-  state.theme=state.theme==='auto'?'light':state.theme==='light'?'dark':'auto';saveState();applyTheme();toast('Apariencia: '+(state.theme==='auto'?'automática':state.theme==='light'?'clara':'oscura'));
-}
-
-function showView(name){
-  $$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));
-  $$('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-  scrollTo({top:0,behavior:'smooth'});
-  if(name==='home'||name==='progress'||name==='training')requestAnimationFrame(renderCharts);
-  if(name==='history')renderHistory();
-}
-$$('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
-$$('[data-go]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.go)));
-
-function bmiCategory(v){
- if(v<18.5)return['Bajo peso','low'];if(v<25)return['Rango saludable','healthy'];if(v<30)return['Sobrepeso','high'];
- if(v<35)return['Obesidad clase I','high'];if(v<40)return['Obesidad clase II','high'];return['Obesidad clase III','high'];
-}
-function bodyFatCategory(v,sex,age){
- const male=sex==='male';
- let ranges;
- if(male) ranges=age<40?[8,20,25]:age<60?[11,22,28]:[13,25,30];
- else ranges=age<40?[21,33,39]:age<60?[23,35,40]:[24,36,42];
- if(v<ranges[0])return'Muy bajo';if(v<=ranges[1])return'Rango habitual';if(v<=ranges[2])return'Elevado';return'Muy elevado';
-}
-function calculate(p){
- const bmi=p.weight/((p.height/100)**2);
- const bmr=10*p.weight+6.25*p.height-5*p.age+(p.sex==='male'?5:-161);
- const tdee=bmr*p.activity;
- const desiredWeekly=p.goal==='maintain'?0:p.weeklyRate*(p.goal==='lose'?-1:1);
- let delta=desiredWeekly*7700/7;
- const maxDelta=p.goal==='lose'?-tdee*.25:p.goal==='gain'?tdee*.15:0;
- if(p.goal==='lose')delta=Math.max(delta,maxDelta);
- if(p.goal==='gain')delta=Math.min(delta,maxDelta);
- let target=tdee+delta;
- const floor=p.sex==='male'?1500:1200;
- let safetyAdjusted=false;
- if(target<floor){target=floor;delta=target-tdee;safetyAdjusted=true}
- let proteinPerKg=p.training==='strength'?2.0:p.goal==='lose'?1.8:p.training==='endurance'?1.6:1.5;
- let protein=round(p.weight*proteinPerKg);
- let fats=round(p.weight*(p.goal==='lose'?.8:p.goal==='gain'?1:0.9));
- const remaining=Math.max(0,target-protein*4-fats*9);
- let carbs=round(remaining/4);
- const water=p.weight*35+(p.activity>=1.55?350:0)+(p.activity>=1.725?250:0);
- const healthyMin=18.5*(p.height/100)**2,healthyMax=24.9*(p.height/100)**2;
- let bodyFat=null;
- if(p.waist&&p.neck&&p.waist>p.neck){
-   if(p.sex==='male')bodyFat=495/(1.0324-0.19077*Math.log10(p.waist-p.neck)+0.15456*Math.log10(p.height))-450;
-   else if(p.hip&&p.waist+p.hip>p.neck)bodyFat=495/(1.29579-0.35004*Math.log10(p.waist+p.hip-p.neck)+0.22100*Math.log10(p.height))-450;
-   if(bodyFat!==null&&(bodyFat<2||bodyFat>70))bodyFat=null;
- }
- const leanMass=bodyFat!==null?p.weight*(1-bodyFat/100):null;
- const whtr=p.waist?p.waist/p.height:null;
- let weeks=null,goalDate=null;
- if(p.goal!=='maintain'&&p.targetWeight&&Math.abs(p.targetWeight-p.weight)>.05){
-   const actualWeekly=Math.abs(delta)*7/7700;
-   if(actualWeekly>0){weeks=Math.ceil(Math.abs(p.targetWeight-p.weight)/actualWeekly);const d=new Date();d.setDate(d.getDate()+weeks*7);goalDate=d.toISOString().slice(0,10)}
- }
- return {bmi,bmr,tdee,target,delta,protein,carbs,fats,water,healthyMin,healthyMax,bodyFat,leanMass,whtr,weeks,goalDate,safetyAdjusted,createdAt:new Date().toISOString()};
-}
-
-function gatherProfile(){
- return{name:$('#name').value.trim(),sex:$('#sex').value,age:num('age'),weight:num('weight'),height:num('height'),activity:num('activity'),
- goal:$('#goal').value,targetWeight:num('targetWeight'),weeklyRate:num('weeklyRate')||.5,waist:num('waist'),neck:num('neck'),hip:num('hip'),training:$('#training').value};
-}
-function validateProfile(p){
- if(!p.sex||!p.age||!p.weight||!p.height||!p.activity)return'Completa todos los campos obligatorios.';
- if(p.age<20||p.age>100)return'La calculadora está diseñada para adultos de 20 a 100 años.';
- if(p.weight<35||p.weight>350||p.height<130||p.height>230)return'Revisa que peso y estatura estén dentro de rangos válidos.';
- if(p.goal==='lose'&&p.targetWeight&&p.targetWeight>=p.weight)return'Para perder grasa, el peso objetivo debe ser menor al actual.';
- if(p.goal==='gain'&&p.targetWeight&&p.targetWeight<=p.weight)return'Para ganar masa, el peso objetivo debe ser mayor al actual.';
- if(p.sex==='female'&&p.waist&&p.neck&&!p.hip)return'Para estimar grasa corporal en mujeres también se necesita la medida de cadera.';
- return'';
-}
-$('#calcForm').addEventListener('submit',e=>{
- e.preventDefault();const p=gatherProfile(),err=validateProfile(p);setText('formMessage',err);if(err){toast(err);return}
- state.profile=p;state.plan=calculate(p);
- if(!state.measurements.length)state.measurements.push({id:crypto.randomUUID?.()||Date.now().toString(),date:today(),weight:p.weight,waist:p.waist,fat:state.plan.bodyFat,note:'Medición inicial'});
- saveState();renderAll();toast('Plan calculado y guardado');showView('plan');
-});
-$('#sex').addEventListener('change',()=>{$('#hipField').style.display=$('#sex').value==='female'?'block':'none'});
-$$('#goalSegment button').forEach(b=>b.addEventListener('click',()=>{
- $$('#goalSegment button').forEach(x=>x.classList.toggle('selected',x===b));$('#goal').value=b.dataset.value;
- $('.goal-fields').style.opacity=b.dataset.value==='maintain'?.45:1;
-}));
-
-function hydrateForm(){
- const p=state.profile;if(!p)return;
- Object.entries(p).forEach(([k,v])=>{const el=$('#'+k);if(el&&v!==null&&v!==undefined)el.value=v});
- $$('#goalSegment button').forEach(b=>b.classList.toggle('selected',b.dataset.value===p.goal));
- $('#hipField').style.display=p.sex==='female'?'block':'none';
-}
-
-function renderAll(){
- renderHome();renderPlan();renderHistory();renderProgress();renderTraining();renderCharts();hydrateForm();
-}
-function renderHome(){
- const p=state.profile,r=state.plan;
- setText('helloTitle',p?.name?`Hola, ${p.name}.`:'Tu progreso, con claridad.');
- setText('heroText',r?goalSentence(p,r):'Completa tu perfil para obtener un plan estimado y personalizado.');
- if(!r){['mBmi','mTdee','mTarget','mProtein','dailyCal','dailyProtein','dailyWater','goalRingValue'].forEach(id=>setText(id,'—'));return}
- const cat=bmiCategory(r.bmi)[0];
- setText('mBmi',fmt(r.bmi,1));setText('mBmiLabel',cat);setText('mTdee',fmt(r.tdee));setText('mTarget',fmt(r.target));setText('mProtein',fmt(r.protein));
- setText('dailyCal',fmt(r.target)+' kcal');setText('dailyProtein',fmt(r.protein)+' g');setText('dailyWater',fmt(r.water/1000,1)+' L');
- setText('dailyCalText',p.goal==='maintain'?'Mantenimiento estimado':'Objetivo energético');setText('dailyProteinText',`${round(r.protein/p.weight,1)} g por kg`);
- setText('dailyWaterText','Incluye bebidas y parte de alimentos');setText('goalRingValue',p.goal==='lose'?'↓ grasa':p.goal==='gain'?'↑ masa':'estable');
- $('#dailyCalBar').style.width='100%';$('#dailyProteinBar').style.width='100%';$('#dailyWaterBar').style.width='100%';
-}
-function goalSentence(p,r){
- if(p.goal==='maintain')return`Tu mantenimiento estimado es ${fmt(r.tdee)} kcal al día.`;
- const action=p.goal==='lose'?'déficit':'superávit';return`Plan con ${action} de ${fmt(Math.abs(r.delta))} kcal/día y ${fmt(r.protein)} g de proteína.`;
-}
-function renderPlan(){
- const p=state.profile,r=state.plan;$('#planEmpty').hidden=!!r;$('#planContent').hidden=!r;if(!r)return;
- setText('planSubtitle',p.name?`Estimación personalizada para ${p.name}.`:'Estimación personalizada según tus datos.');
- setText('rTarget',fmt(r.target));setText('rDelta',p.goal==='maintain'?'Mantenimiento':`${r.delta>0?'+':''}${fmt(r.delta)} kcal frente al mantenimiento${r.safetyAdjusted?' · ajustado por seguridad':''}`);
- setText('rBmr',fmt(r.bmr));setText('rTdee',fmt(r.tdee));setText('rBmi',fmt(r.bmi,1));setText('rBmiLabel',bmiCategory(r.bmi)[0]);
- setText('rWhr',r.whtr?fmt(r.whtr,2):'—');setText('rWhrLabel',r.whtr?(r.whtr<.5?'Por debajo de 0.50':'0.50 o más; interprétalo con contexto'):'Requiere cintura');
- setText('rProtein',fmt(r.protein)+' g');setText('rProteinCal',fmt(r.protein*4)+' kcal');
- setText('rCarbs',fmt(r.carbs)+' g');setText('rCarbsCal',fmt(r.carbs*4)+' kcal');
- setText('rFats',fmt(r.fats)+' g');setText('rFatsCal',fmt(r.fats*9)+' kcal');setText('macroTotal',fmt(r.target));
- const pc=r.protein*4/r.target*100,cc=r.carbs*4/r.target*100;$('#macroChart').style.background=`conic-gradient(#26795b 0 ${pc}%,#6f9e8b ${pc}% ${pc+cc}%,#c8d9d1 ${pc+cc}% 100%)`;
- if(r.bodyFat!==null){setText('rBodyFat',fmt(r.bodyFat,1)+' %');setText('rBodyFatLabel',bodyFatCategory(r.bodyFat,p.sex,p.age));setText('rLeanMass',fmt(r.leanMass,1)+' kg')}else{setText('rBodyFat','—');setText('rBodyFatLabel','Requiere medidas completas');setText('rLeanMass','—')}
- setText('rWater',fmt(r.water/1000,1)+' L');setText('rHealthyRange',`${fmt(r.healthyMin,1)}–${fmt(r.healthyMax,1)} kg`);
- if(r.weeks){setText('rWeeks',`${r.weeks} semanas`);setText('rDate',new Date(r.goalDate+'T12:00:00').toLocaleDateString('es-PE',{month:'long',year:'numeric'}));setText('rProjectionText',`Proyección lineal aproximada desde ${fmt(p.weight,1)} kg hasta ${fmt(p.targetWeight,1)} kg. El progreso real no suele ser lineal y debe reevaluarse cada 2–4 semanas.`)}
- else{setText('rWeeks','Sin plazo');setText('rDate',p.goal==='maintain'?'Objetivo de mantenimiento':'Añade un peso objetivo');setText('rProjectionText','Registra mediciones periódicas y ajusta el plan según tu tendencia, rendimiento, hambre y recuperación.')}
-}
-function renderProgress(){
- $('#progressDate').value=$('#progressDate').value||today();if(state.profile&&!$('#progressWeight').value)$('#progressWeight').value=state.profile.weight||'';
- const a=[...state.measurements].sort((x,y)=>x.date.localeCompare(y.date));
- if(a.length<2){setText('trendTotal','—');setText('trendWeekly','—')}
- else {
- const first=a[0],last=a.at(-1),diff=last.weight-first.weight,days=Math.max(1,(new Date(last.date)-new Date(first.date))/86400000);
- setText('trendTotal',`${diff>0?'+':''}${fmt(diff,1)} kg`);setText('trendWeekly',`${diff/days*7>0?'+':''}${fmt(diff/days*7,2)} kg`);
- }
- const logs=state.proteinLogs||[],target=state.plan?.protein||null;
- setText('proteinTargetDisplay',target?fmt(target)+' g/día':'Calcula tu plan');
- if(logs.length){
-   const avg=logs.reduce((a,x)=>a+x.grams,0)/logs.length;
-   const adherence=target?logs.filter(x=>x.grams>=target*.9).length/logs.length*100:null;
-   setText('proteinAverage',fmt(avg)+' g');setText('proteinAdherence',adherence!==null?fmt(adherence)+' %':'—');
- }else{setText('proteinAverage','—');setText('proteinAdherence','—')}
-}
-$('#progressForm').addEventListener('submit',e=>{
- e.preventDefault();const date=$('#progressDate').value,weight=num('progressWeight');if(!date||!weight){toast('Fecha y peso son obligatorios');return}
- const item={id:crypto.randomUUID?.()||Date.now().toString(),date,weight,waist:num('progressWaist'),fat:num('progressFat'),note:$('#progressNote').value.trim()};
- state.measurements.push(item);state.measurements.sort((a,b)=>a.date.localeCompare(b.date));saveState();e.target.reset();$('#progressDate').value=today();renderAll();toast('Medición guardada');
-});
-
-
-$('#proteinForm').addEventListener('submit',e=>{
- e.preventDefault();
- const date=$('#proteinDate').value,grams=num('proteinActual');
- if(!date||grams===null||grams<0){toast('Ingresa una fecha y una cantidad válida');return}
- const existing=(state.proteinLogs||[]).find(x=>x.date===date);
- const item={id:existing?.id||crypto.randomUUID?.()||Date.now().toString(),date,grams,note:$('#proteinNote').value.trim(),target:state.plan?.protein||null};
- state.proteinLogs=(state.proteinLogs||[]).filter(x=>x.date!==date);
- state.proteinLogs.push(item);state.proteinLogs.sort((a,b)=>a.date.localeCompare(b.date));
- saveState();e.target.reset();$('#proteinDate').value=today();renderAll();toast(existing?'Proteína actualizada':'Proteína guardada');
-});
-
-
+const KEY='forge.performance.os.v2';
 const DAYS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-const DAY_KEYS=['mon','tue','wed','thu','fri','sat','sun'];
-const TEMPLATE_SPLITS={
- fullbody3:{name:'Full Body 3 días',days:[
-  {day:'mon',name:'Full Body A',exercises:['sentadilla','press_banca','remo_barra','peso_muerto_rumano','elevaciones_laterales','plancha']},
-  {day:'wed',name:'Full Body B',exercises:['peso_muerto','press_militar','jalon_pecho','bulgaras','curl_biceps','extension_triceps']},
-  {day:'fri',name:'Full Body C',exercises:['prensa','press_inclinado','remo_cable','hip_thrust','face_pull','crunch']}
- ]},
- upperlower4:{name:'Upper / Lower 4 días',days:[
-  {day:'mon',name:'Upper A',exercises:['press_banca','remo_barra','press_militar','jalon_pecho','curl_biceps','extension_triceps']},
-  {day:'tue',name:'Lower A',exercises:['sentadilla','peso_muerto_rumano','prensa','curl_femoral','gemelos_pie','plancha']},
-  {day:'thu',name:'Upper B',exercises:['press_inclinado','dominadas','press_hombro_mancuernas','remo_cable','curl_martillo','press_frances']},
-  {day:'fri',name:'Lower B',exercises:['peso_muerto','bulgaras','hip_thrust','extension_cuadriceps','gemelos_sentado','pallof_press']}
- ]},
- ppl6:{name:'Push Pull Legs 6 días',days:[
-  {day:'mon',name:'Push A',exercises:['press_banca','press_inclinado','press_militar','elevaciones_laterales','extension_triceps']},
-  {day:'tue',name:'Pull A',exercises:['dominadas','remo_barra','jalon_pecho','face_pull','curl_biceps']},
-  {day:'wed',name:'Legs A',exercises:['sentadilla','peso_muerto_rumano','prensa','curl_femoral','gemelos_pie']},
-  {day:'thu',name:'Push B',exercises:['press_mancuernas','fondos','press_hombro_mancuernas','elevaciones_laterales','press_frances']},
-  {day:'fri',name:'Pull B',exercises:['remo_mancuerna','jalon_pecho','pullover_polea','pajaros','curl_martillo']},
-  {day:'sat',name:'Legs B',exercises:['peso_muerto','bulgaras','hip_thrust','extension_cuadriceps','gemelos_sentado']}
- ]},
- bro5:{name:'Torso por grupos 5 días',days:[
-  {day:'mon',name:'Pecho',exercises:['press_banca','press_inclinado','press_mancuernas','cruce_poleas','fondos']},
-  {day:'tue',name:'Espalda',exercises:['dominadas','remo_barra','jalon_pecho','remo_cable','pullover_polea']},
-  {day:'wed',name:'Piernas',exercises:['sentadilla','prensa','peso_muerto_rumano','curl_femoral','gemelos_pie']},
-  {day:'thu',name:'Hombros',exercises:['press_militar','press_hombro_mancuernas','elevaciones_laterales','pajaros','face_pull']},
-  {day:'fri',name:'Brazos',exercises:['curl_biceps','curl_mancuernas','curl_martillo','extension_triceps','press_frances']}
- ]}
+const DAYKEYS=['mon','tue','wed','thu','fri','sat','sun'];
+const EXERCISES={
+ press_banca:{name:'Press de banca',muscle:'Pecho',secondary:'Tríceps y hombro anterior',equipment:'Barra',icon:'▰',step:2.5,instructions:'Apoya pies y espalda, baja la barra con control hacia el pecho y empuja manteniendo tensión.',tip:'Mantén los omóplatos retraídos y los codos estables.'},
+ press_inclinado:{name:'Press inclinado',muscle:'Pecho',secondary:'Hombro anterior y tríceps',equipment:'Barra',icon:'╱',step:2.5,instructions:'Usa una inclinación moderada y baja la barra hacia la zona superior del pecho.',tip:'Evita una inclinación excesiva.'},
+ press_mancuernas:{name:'Press con mancuernas',muscle:'Pecho',secondary:'Tríceps',equipment:'Mancuernas',icon:'◆',step:2,instructions:'Baja las mancuernas junto al pecho y extiende sin perder control.',tip:'Mantén muñecas neutras.'},
+ fondos:{name:'Fondos',muscle:'Pecho',secondary:'Tríceps',equipment:'Peso corporal',icon:'∪',step:2.5,instructions:'Desciende con control y empuja hasta extender los codos.',tip:'Inclina ligeramente el torso para enfatizar pecho.'},
+ flexiones:{name:'Flexiones',muscle:'Pecho',secondary:'Tríceps y core',equipment:'Peso corporal',icon:'—',step:1,instructions:'Mantén el cuerpo alineado, baja el pecho y empuja el suelo.',tip:'Evita que la cadera caiga.'},
+ dominadas:{name:'Dominadas',muscle:'Espalda',secondary:'Bíceps',equipment:'Peso corporal',icon:'⌃',step:2.5,instructions:'Desde suspensión activa, lleva el pecho hacia la barra.',tip:'Inicia con depresión escapular.'},
+ jalon_pecho:{name:'Jalón al pecho',muscle:'Espalda',secondary:'Bíceps',equipment:'Polea',icon:'⇣',step:5,instructions:'Tira de la barra hacia el pecho manteniendo el torso estable.',tip:'No te inclines demasiado.'},
+ remo_barra:{name:'Remo con barra',muscle:'Espalda',secondary:'Bíceps y lumbar',equipment:'Barra',icon:'↔',step:2.5,instructions:'Inclina el torso y lleva la barra hacia el abdomen.',tip:'Mantén espalda neutra.'},
+ remo_mancuerna:{name:'Remo con mancuerna',muscle:'Espalda',secondary:'Bíceps',equipment:'Mancuernas',icon:'↤',step:2,instructions:'Lleva el codo hacia la cadera y controla el descenso.',tip:'Evita rotar el torso.'},
+ remo_polea:{name:'Remo sentado',muscle:'Espalda',secondary:'Bíceps',equipment:'Polea',icon:'⇆',step:5,instructions:'Tira del agarre al abdomen y junta escápulas.',tip:'Evita balancearte.'},
+ sentadilla:{name:'Sentadilla trasera',muscle:'Cuádriceps',secondary:'Glúteos y core',equipment:'Barra',icon:'⌄',step:5,instructions:'Desciende flexionando cadera y rodillas con el pie completo apoyado.',tip:'Mantén rodillas alineadas con los pies.'},
+ sentadilla_frontal:{name:'Sentadilla frontal',muscle:'Cuádriceps',secondary:'Core',equipment:'Barra',icon:'⌄',step:2.5,instructions:'Sostén la barra al frente y desciende con torso erguido.',tip:'Mantén los codos altos.'},
+ prensa:{name:'Prensa de piernas',muscle:'Cuádriceps',secondary:'Glúteos',equipment:'Máquina',icon:'▱',step:5,instructions:'Baja la plataforma hasta un rango cómodo y empuja sin bloquear rodillas.',tip:'No despegues la zona lumbar.'},
+ zancadas:{name:'Zancadas',muscle:'Cuádriceps',secondary:'Glúteos',equipment:'Mancuernas',icon:'⋰',step:2,instructions:'Da un paso amplio y baja ambas rodillas con control.',tip:'Mantén la rodilla alineada.'},
+ bulgaras:{name:'Sentadilla búlgara',muscle:'Cuádriceps',secondary:'Glúteos',equipment:'Mancuernas',icon:'⋱',step:2,instructions:'Apoya el pie trasero elevado y baja sobre la pierna delantera.',tip:'Ajusta la distancia para equilibrarte.'},
+ peso_muerto:{name:'Peso muerto',muscle:'Isquiotibiales',secondary:'Glúteos y espalda',equipment:'Barra',icon:'⌁',step:5,instructions:'Empuja el suelo manteniendo la barra cerca del cuerpo.',tip:'No hiperextiendas al final.'},
+ rumano:{name:'Peso muerto rumano',muscle:'Isquiotibiales',secondary:'Glúteos',equipment:'Barra',icon:'⌁',step:2.5,instructions:'Lleva la cadera atrás y baja la barra cerca de las piernas.',tip:'Detente al perder tensión posterior.'},
+ curl_femoral:{name:'Curl femoral',muscle:'Isquiotibiales',secondary:'',equipment:'Máquina',icon:'⌒',step:2.5,instructions:'Flexiona las rodillas y vuelve lentamente.',tip:'Mantén la cadera pegada.'},
+ hip_thrust:{name:'Hip thrust',muscle:'Glúteos',secondary:'Isquiotibiales',equipment:'Barra',icon:'⌇',step:5,instructions:'Extiende la cadera hasta alinear rodillas, cadera y hombros.',tip:'Evita hiperextender la espalda.'},
+ press_militar:{name:'Press militar',muscle:'Hombros',secondary:'Tríceps',equipment:'Barra',icon:'⇧',step:2.5,instructions:'Empuja la barra sobre la cabeza con abdomen y glúteos activos.',tip:'La barra viaja cerca del rostro.'},
+ press_hombro:{name:'Press de hombro',muscle:'Hombros',secondary:'Tríceps',equipment:'Mancuernas',icon:'⇧',step:2,instructions:'Empuja las mancuernas arriba y baja controlando.',tip:'No arquees la zona lumbar.'},
+ laterales:{name:'Elevaciones laterales',muscle:'Hombros',secondary:'',equipment:'Mancuernas',icon:'↟',step:1,instructions:'Eleva los brazos hasta la altura del hombro.',tip:'Dirige el movimiento con los codos.'},
+ face_pull:{name:'Face pull',muscle:'Hombros',secondary:'Espalda alta',equipment:'Polea',icon:'⇐',step:1,instructions:'Tira de la cuerda hacia la cara separando las manos.',tip:'Prioriza control y rotación externa.'},
+ curl_biceps:{name:'Curl de bíceps',muscle:'Bíceps',secondary:'Antebrazo',equipment:'Barra',icon:'∩',step:1,instructions:'Flexiona los codos sin moverlos hacia delante.',tip:'Evita balancear el torso.'},
+ curl_martillo:{name:'Curl martillo',muscle:'Bíceps',secondary:'Antebrazo',equipment:'Mancuernas',icon:'∩',step:1,instructions:'Flexiona con agarre neutro.',tip:'Controla especialmente la bajada.'},
+ extension_triceps:{name:'Extensión de tríceps',muscle:'Tríceps',secondary:'',equipment:'Polea',icon:'⇩',step:1,instructions:'Extiende los codos sin mover los brazos.',tip:'Separa la cuerda al final.'},
+ press_frances:{name:'Press francés',muscle:'Tríceps',secondary:'',equipment:'Barra',icon:'⌇',step:1,instructions:'Flexiona los codos llevando la barra hacia la frente.',tip:'Mantén los codos apuntando arriba.'},
+ gemelos:{name:'Elevación de gemelos',muscle:'Pantorrillas',secondary:'',equipment:'Máquina',icon:'↥',step:2.5,instructions:'Sube sobre la punta de los pies y baja con control.',tip:'Haz pausa arriba.'},
+ plancha:{name:'Plancha frontal',muscle:'Core',secondary:'Hombros',equipment:'Peso corporal',icon:'━',step:1,instructions:'Mantén cuerpo alineado sobre antebrazos y pies.',tip:'Aprieta glúteos y abdomen.'},
+ crunch:{name:'Crunch abdominal',muscle:'Core',secondary:'',equipment:'Peso corporal',icon:'⌒',step:1,instructions:'Acerca costillas a pelvis elevando ligeramente el torso.',tip:'No tires del cuello.'},
+ pallof:{name:'Pallof press',muscle:'Core',secondary:'Oblicuos',equipment:'Polea',icon:'⊣',step:1,instructions:'Empuja el agarre al frente resistiendo la rotación.',tip:'Mantén pelvis y costillas alineadas.'}
 };
-let selectedExerciseId=null, editingSplitId=null, draftSplit=null, trainingTab='week', splitPickerDay=null, splitPickerSelection=[];
-
-function demoFor(ex){return `demo-${EXERCISES[ex]?.pattern||'machine'}.gif`}
-
-const ATLAS_DEADLIFT_FRAMES=Array.from({length:8},(_,i)=>`deadlift_${String(i+1).padStart(2,'0')}.png`);
-const ATLAS_DEADLIFT_PHASES=[
- ['Posición inicial','Barra sobre el centro del pie y abdomen activo.'],
- ['Inicio del empuje','Empuja el suelo manteniendo la barra cerca.'],
- ['Extensión','Cadera y hombros ascienden coordinados.'],
- ['Posición superior','Termina erguido sin hiperextender la espalda.'],
- ['Pausa superior','Mantén glúteos y abdomen activos.'],
- ['Descenso controlado','Lleva primero la cadera hacia atrás.'],
- ['Barra a media pierna','Conserva la barra pegada al cuerpo.'],
- ['Posición inicial','Apoya la barra y prepara otra repetición.']
-];
-const ATLAS_DEADLIFT_DURATIONS=[260,145,125,230,210,140,160,280];
-let atlasFrameIndex=0,atlasPlaying=false,atlasLastChange=0,atlasAnimationId=0;
-
-function renderAtlasFrame(){
- const img=$('#atlasFrame');if(!img)return;
- img.src=ATLAS_DEADLIFT_FRAMES[atlasFrameIndex];
- setText('atlasFrameNumber',atlasFrameIndex+1);
- setText('atlasPhaseName',ATLAS_DEADLIFT_PHASES[atlasFrameIndex][0]);
- setText('atlasPhaseTip',ATLAS_DEADLIFT_PHASES[atlasFrameIndex][1]);
- $('#atlasProgress').style.width=`${((atlasFrameIndex+1)/ATLAS_DEADLIFT_FRAMES.length)*100}%`;
-}
-function setAtlasPlaying(value){
- atlasPlaying=value;
- atlasLastChange=performance.now();
-}
-function atlasLoop(now){
- if(atlasPlaying&&now-atlasLastChange>=ATLAS_DEADLIFT_DURATIONS[atlasFrameIndex]){
-  atlasFrameIndex=(atlasFrameIndex+1)%ATLAS_DEADLIFT_FRAMES.length;renderAtlasFrame();atlasLastChange=now;
- }
- atlasAnimationId=requestAnimationFrame(atlasLoop);
-}
-function startAtlasPlayer(){
- atlasFrameIndex=0;
- renderAtlasFrame();
- setAtlasPlaying(true);
- cancelAnimationFrame(atlasAnimationId);
- atlasAnimationId=requestAnimationFrame(atlasLoop);
-}
-function stopAtlasPlayer(){setAtlasPlaying(false);cancelAnimationFrame(atlasAnimationId);atlasAnimationId=0}
-ATLAS_DEADLIFT_FRAMES.forEach(src=>{const img=new Image();img.src=src});
-
-function todayKey(){return DAY_KEYS[(new Date().getDay()+6)%7]}
-function activeSplit(){return (state.splits||[]).find(x=>x.id===state.activeSplitId)||null}
-function latestWorkout(exercise){return [...(state.workouts||[])].filter(w=>w.exercise===exercise).sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt))[0]||null}
-function recommendationFor(exercise,range='8-12'){
- const last=latestWorkout(exercise),[low,high]=range.split('-').map(Number),step=EXERCISES[exercise]?.step||2.5;
- if(!last)return{title:'Primera sesión',text:'Usa una carga que deje 2–3 repeticiones en reserva.'};
- const stats=sessionStats(last),sets=last.sets.filter(s=>s.reps>0),allTop=sets.length&&sets.every(s=>s.reps>=high),avg=sets.reduce((a,s)=>a+s.reps,0)/Math.max(1,sets.length);
- if(allTop&&stats.avgRir>=1.5)return{title:`Sube a ${fmt(stats.topWeight+step,1)} kg`,text:`Completaste el rango alto con RIR ${fmt(stats.avgRir,1)}.`};
- if(avg<low||stats.avgRir<.5)return{title:`Mantén o baja a ${fmt(Math.max(0,stats.topWeight-step),1)} kg`,text:'Prioriza técnica y recuperación.'};
- return{title:`Mantén ${fmt(stats.topWeight,1)} kg`,text:'Intenta sumar una repetición total antes de subir carga.'};
-}
-function setTrainingTab(tab){
- trainingTab=tab;
- $$('#trainingMainTabs button').forEach(b=>b.classList.toggle('selected',b.dataset.trainingTab===tab));
- $$('.training-panel').forEach(p=>p.classList.toggle('active',p.id===`training-panel-${tab}`));
- if(tab==='stats')requestAnimationFrame(renderCharts);
-}
-$$('#trainingMainTabs button').forEach(b=>b.addEventListener('click',()=>setTrainingTab(b.dataset.trainingTab)));
-
-function populateFilters(){
- const muscles=[...new Set(Object.values(EXERCISES).map(x=>x.muscle))].sort();
- const equipment=[...new Set(Object.values(EXERCISES).map(x=>x.equipment))].sort();
- $('#exerciseMuscleFilter').innerHTML='<option value="">Todos los músculos</option>'+muscles.map(x=>`<option>${x}</option>`).join('');
- $('#exerciseEquipmentFilter').innerHTML='<option value="">Todo el equipo</option>'+equipment.map(x=>`<option>${x}</option>`).join('');
-}
-function renderExerciseLibrary(){
- const q=$('#exerciseSearch').value.toLowerCase().trim(),m=$('#exerciseMuscleFilter').value,e=$('#exerciseEquipmentFilter').value;
- const entries=Object.entries(EXERCISES).filter(([id,x])=>(!q||`${x.name} ${x.muscle} ${x.secondary} ${x.equipment}`.toLowerCase().includes(q))&&(!m||x.muscle===m)&&(!e||x.equipment===e));
- setText('exerciseCount',`${entries.length} ejercicios`);
- $('#exerciseLibrary').innerHTML=entries.map(([id,x])=>`<article class="exercise-card card" data-exercise="${id}"><img src="${demoFor(id)}" alt="${x.name}"><div class="exercise-card-body"><h3>${x.name}</h3><p>${x.muscle}${x.secondary?` · ${x.secondary}`:''}</p><div class="exercise-tags"><span>${x.equipment}</span><span>+ sesión</span></div></div></article>`).join('');
- $$('[data-exercise]',$('#exerciseLibrary')).forEach(c=>c.addEventListener('click',()=>openExerciseModal(c.dataset.exercise)));
-}
-['exerciseSearch','exerciseMuscleFilter','exerciseEquipmentFilter'].forEach(id=>$('#'+id).addEventListener(id==='exerciseSearch'?'input':'change',renderExerciseLibrary));
-
-function openExerciseModal(id){
- selectedExerciseId=id;const x=EXERCISES[id],usesAtlas=id==='peso_muerto';
- $('#exerciseDemo').hidden=usesAtlas;
- $('#atlasPlayer').hidden=!usesAtlas;
- if(usesAtlas)startAtlasPlayer();else{$('#exerciseDemo').src=demoFor(id);stopAtlasPlayer()}
- setText('exerciseModalMuscle',x.muscle.toUpperCase());setText('exerciseModalName',x.name);
- setText('exerciseModalMeta',`${x.equipment}${x.secondary?` · También trabaja ${x.secondary}`:''}`);
- setText('exerciseModalInstructions',x.instructions);setText('exerciseModalTip',x.tip);$('#exerciseModal').hidden=false;
-}
-function closeExerciseModal(){stopAtlasPlayer();$('#exerciseModal').hidden=true}
-$$('[data-close-sheet]').forEach(x=>x.addEventListener('click',closeExerciseModal));
-$('#modalAddExerciseBtn').addEventListener('click',()=>{addExerciseToSession(selectedExerciseId);closeExerciseModal();setTrainingTab('session')});
-
-
-
-function ensureSession(name='Entrenamiento libre'){
- if(!state.activeSession)state.activeSession={id:crypto.randomUUID?.()||Date.now().toString(),name,date:today(),exercises:[],startedAt:new Date().toISOString()};
-}
-function addExerciseToSession(id){
- ensureSession();if(!id)return;
- state.activeSession.exercises.push({exercise:id,repRange:'8-12',sets:[{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2}]});
- saveState();renderSession();toast(`${EXERCISES[id].name} añadido`);
-}
-function startRoutine(day){
- const split=activeSplit(),routine=split?.days.find(x=>x.day===day);if(!routine){ensureSession();setTrainingTab('session');renderSession();return}
- state.activeSession={id:crypto.randomUUID?.()||Date.now().toString(),name:routine.name,date:today(),splitId:split.id,day,startedAt:new Date().toISOString(),exercises:routine.exercises.map(id=>({exercise:id,repRange:'8-12',sets:[{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2}]}))};
- saveState();setTrainingTab('session');renderSession();
-}
-function renderSession(){
- const s=state.activeSession;setText('sessionRoutineName',s?.name||'Entrenamiento libre');setText('sessionProgressText',s?`${s.exercises.length} ejercicios · ${new Date(s.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'long'})}`:'Añade ejercicios para empezar.');
- const list=$('#sessionExerciseList');list.innerHTML='';
- if(!s)return;
- s.exercises.forEach((item,idx)=>{
-  const x=EXERCISES[item.exercise],rec=recommendationFor(item.exercise,item.repRange),el=document.createElement('article');el.className='session-exercise card';
-  el.innerHTML=`<div class="session-exercise-head"><img src="${demoFor(item.exercise)}" alt="${x.name}"><div><h3>${idx+1}. ${x.name}</h3><p>${x.muscle} · ${item.repRange} reps</p></div><button class="remove-exercise" data-remove-ex="${idx}">×</button></div><div class="exercise-recommendation"><strong>${rec.title}</strong>${rec.text}</div><div class="session-sets"><div class="session-set-head"><span>#</span><span>kg</span><span>reps</span><span>RIR</span><span></span></div>${item.sets.map((set,si)=>`<div class="session-set-row" data-set-row="${si}"><span class="set-number">${si+1}</span><input data-field="weight" type="number" inputmode="decimal" min="0" step="0.5" value="${set.weight}"><input data-field="reps" type="number" inputmode="numeric" min="0" value="${set.reps}"><input data-field="rir" type="number" inputmode="numeric" min="0" max="10" value="${set.rir}"><button data-check-set="${si}">✓</button></div>`).join('')}<button class="text-btn" data-add-set-session="${idx}">+ Serie</button></div>`;
-  list.appendChild(el);
-  $$('input',el).forEach(inp=>inp.addEventListener('input',()=>{const row=inp.closest('[data-set-row]'),si=+row.dataset.setRow;item.sets[si][inp.dataset.field]=inp.value;saveState()}));
- });
- $$('[data-remove-ex]',list).forEach(b=>b.addEventListener('click',()=>{s.exercises.splice(+b.dataset.removeEx,1);saveState();renderSession()}));
- $$('[data-add-set-session]',list).forEach(b=>b.addEventListener('click',()=>{s.exercises[+b.dataset.addSetSession].sets.push({weight:'',reps:'',rir:2});saveState();renderSession()}));
- $$('[data-check-set]',list).forEach(b=>b.addEventListener('click',()=>{b.classList.toggle('done');b.textContent=b.classList.contains('done')?'✓':'○'}));
-}
-$('#addExerciseToSessionBtn').addEventListener('click',()=>setTrainingTab('library'));
-$('#finishSessionBtn').addEventListener('click',()=>{
- const s=state.activeSession;if(!s||!s.exercises.length){toast('No hay ejercicios en la sesión');return}
- let saved=0;
- s.exercises.forEach(item=>{
-  const sets=item.sets.map(x=>({weight:parseFloat(x.weight)||0,reps:parseInt(x.reps)||0,rir:Math.max(0,Math.min(10,parseFloat(x.rir)||0))})).filter(x=>x.reps>0);
-  if(sets.length){state.workouts.push({id:crypto.randomUUID?.()||Date.now()+String(saved),date:s.date,exercise:item.exercise,repRange:item.repRange,sets,note:s.name,createdAt:new Date().toISOString()});saved++}
- });
- if(!saved){toast('Registra al menos una serie válida');return}
- state.activeSession=null;saveState();renderAll();setTrainingTab('stats');toast(`Sesión guardada · ${saved} ejercicios`);
-});
-
-function openSplitModal(split=null){
- editingSplitId=split?.id||null;draftSplit=split?JSON.parse(JSON.stringify(split)):{id:null,name:'Mi split',days:[]};
- setText('splitModalTitle',split?'Editar split':'Crear split');$('#splitName').value=draftSplit.name;renderSplitEditor();$('#splitModal').hidden=false;
-}
-function closeSplitModal(){$('#splitModal').hidden=true}
-$$('[data-close-split]').forEach(x=>x.addEventListener('click',closeSplitModal));
-function applyTemplate(key){const t=TEMPLATE_SPLITS[key];draftSplit={id:editingSplitId,name:t.name,days:JSON.parse(JSON.stringify(t.days))};$('#splitName').value=t.name;renderSplitEditor()}
-$$('#splitTemplates button').forEach(b=>b.addEventListener('click',()=>applyTemplate(b.dataset.template)));
-
-function populateSplitPickerFilters(){
- const muscles=[...new Set(Object.values(EXERCISES).map(x=>x.muscle))].sort();
- const equipment=[...new Set(Object.values(EXERCISES).map(x=>x.equipment))].sort();
- $('#splitExerciseMuscleFilter').innerHTML='<option value="">Todos los músculos</option>'+muscles.map(x=>`<option>${x}</option>`).join('');
- $('#splitExerciseEquipmentFilter').innerHTML='<option value="">Todo el equipo</option>'+equipment.map(x=>`<option>${x}</option>`).join('');
-}
-function openSplitExercisePicker(dayKey){
- splitPickerDay=dayKey;
- let day=draftSplit.days.find(x=>x.day===dayKey);
- if(!day){day={day:dayKey,name:'Entrenamiento',exercises:[]};draftSplit.days.push(day)}
- splitPickerSelection=[...day.exercises];
- const dayIndex=DAY_KEYS.indexOf(dayKey);
- setText('splitPickerTitle',`Ejercicios del ${DAYS[dayIndex]}`);
- $('#splitExerciseSearch').value='';
- $('#splitExerciseMuscleFilter').value='';
- $('#splitExerciseEquipmentFilter').value='';
- renderSplitExercisePicker();
- $('#splitExercisePicker').hidden=false;
-}
-function closeSplitExercisePicker(){$('#splitExercisePicker').hidden=true}
-$$('[data-close-split-picker]').forEach(x=>x.addEventListener('click',closeSplitExercisePicker));
-function toggleSplitExercise(id){
- const idx=splitPickerSelection.indexOf(id);
- if(idx>=0)splitPickerSelection.splice(idx,1);else splitPickerSelection.push(id);
- renderSplitExercisePicker();
-}
-function renderSplitSelected(){
- setText('splitSelectedCount',`${splitPickerSelection.length} ejercicio${splitPickerSelection.length===1?'':'s'}`);
- const wrap=$('#splitSelectedExercises');
- wrap.innerHTML=splitPickerSelection.length
-  ? splitPickerSelection.map(id=>`<span class="split-selected-chip">${EXERCISES[id]?.name||id}<button type="button" data-remove-selected="${id}">×</button></span>`).join('')
-  : '<span class="empty-selected">Aún no seleccionaste ejercicios.</span>';
- $$('[data-remove-selected]',wrap).forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();toggleSplitExercise(b.dataset.removeSelected)}));
-}
-function renderSplitExercisePicker(){
- const q=$('#splitExerciseSearch').value.toLowerCase().trim();
- const muscle=$('#splitExerciseMuscleFilter').value;
- const equipment=$('#splitExerciseEquipmentFilter').value;
- const entries=Object.entries(EXERCISES).filter(([id,x])=>
-   (!q||`${x.name} ${x.muscle} ${x.secondary} ${x.equipment}`.toLowerCase().includes(q)) &&
-   (!muscle||x.muscle===muscle) &&
-   (!equipment||x.equipment===equipment)
- );
- $('#splitExerciseOptions').innerHTML=entries.map(([id,x])=>`
-   <article class="split-exercise-option ${splitPickerSelection.includes(id)?'selected':''}" data-split-exercise="${id}">
-     <img src="${demoFor(id)}" alt="${x.name}">
-     <div><h3>${x.name}</h3><p>${x.muscle}${x.secondary?` · ${x.secondary}`:''} · ${x.equipment}</p></div>
-     <span class="split-exercise-check">✓</span>
-   </article>`).join('');
- $$('[data-split-exercise]',$('#splitExerciseOptions')).forEach(card=>card.addEventListener('click',()=>toggleSplitExercise(card.dataset.splitExercise)));
- renderSplitSelected();
-}
-['splitExerciseSearch','splitExerciseMuscleFilter','splitExerciseEquipmentFilter'].forEach(id=>{
- $('#'+id).addEventListener(id==='splitExerciseSearch'?'input':'change',renderSplitExercisePicker);
-});
-$('#saveSplitExercisesBtn').addEventListener('click',()=>{
- let day=draftSplit.days.find(x=>x.day===splitPickerDay);
- if(!day){day={day:splitPickerDay,name:'Entrenamiento',exercises:[]};draftSplit.days.push(day)}
- day.exercises=[...splitPickerSelection];
- if(day.name==='Descanso'&&day.exercises.length)day.name='Entrenamiento';
- closeSplitExercisePicker();renderSplitEditor();toast('Ejercicios actualizados');
-});
-
-function renderSplitEditor(){
- const map=Object.fromEntries((draftSplit.days||[]).map(x=>[x.day,x]));
- $('#splitDaysEditor').innerHTML=DAY_KEYS.map((key,i)=>{const d=map[key]||{day:key,name:'Descanso',exercises:[]};return `<article class="split-day-editor" data-day="${key}"><div class="split-day-editor-head"><strong>${DAYS[i]}</strong><input class="split-day-name" value="${d.name}"></div><div class="split-day-exercises">${d.exercises.map(id=>`<span>${EXERCISES[id]?.name||id}</span>`).join('')||'<span>Sin ejercicios</span>'}</div><button data-edit-day="${key}">Seleccionar ejercicios</button></article>`}).join('');
- $$('.split-day-name',$('#splitDaysEditor')).forEach(inp=>inp.addEventListener('input',()=>{const key=inp.closest('[data-day]').dataset.day;let d=draftSplit.days.find(x=>x.day===key);if(!d){d={day:key,name:inp.value,exercises:[]};draftSplit.days.push(d)}else d.name=inp.value}));
- $$('[data-edit-day]',$('#splitDaysEditor')).forEach(b=>b.addEventListener('click',()=>openSplitExercisePicker(b.dataset.editDay)));
-}
-$('#newSplitBtn').addEventListener('click',()=>openSplitModal());
-$('#openTemplatesBtn').addEventListener('click',()=>openSplitModal());
-$('#editSplitBtn').addEventListener('click',()=>{const s=activeSplit();if(s)openSplitModal(s);else openSplitModal()});
-$('#duplicateSplitBtn').addEventListener('click',()=>{const s=activeSplit();if(!s)return;const copy=JSON.parse(JSON.stringify(s));copy.id=crypto.randomUUID?.()||Date.now().toString();copy.name+=' copia';state.splits.push(copy);state.activeSplitId=copy.id;saveState();renderTraining();toast('Split duplicado')});
-$('#saveSplitBtn').addEventListener('click',()=>{
- draftSplit.name=$('#splitName').value.trim()||'Mi split';draftSplit.days=(draftSplit.days||[]).filter(d=>d.name!=='Descanso'||d.exercises.length);
- if(editingSplitId){const i=state.splits.findIndex(x=>x.id===editingSplitId);draftSplit.id=editingSplitId;state.splits[i]=draftSplit}else{draftSplit.id=crypto.randomUUID?.()||Date.now().toString();state.splits.push(draftSplit)}
- state.activeSplitId=draftSplit.id;saveState();closeSplitModal();renderTraining();toast('Split guardado');
-});
-$('#activeSplitSelect').addEventListener('change',()=>{state.activeSplitId=$('#activeSplitSelect').value||null;saveState();renderTraining()});
-$('#startTodayBtn').addEventListener('click',()=>startRoutine(todayKey()));
-
-function renderWeek(){
- const split=activeSplit();$('#splitEmpty').hidden=!!split;$('#weekSchedule').innerHTML='';if(!split)return;
- const byDay=Object.fromEntries(split.days.map(x=>[x.day,x])),today=todayKey();
- $('#weekSchedule').innerHTML=DAY_KEYS.map((key,i)=>{const r=byDay[key],isToday=key===today;return `<article class="week-day card ${isToday?'today':''}"><div class="day-badge"><strong>${DAYS[i].slice(0,3)}</strong><small>${isToday?'HOY':''}</small></div><div><h3>${r?.name||'Descanso'}</h3><p>${r?.exercises?.length?r.exercises.map(id=>EXERCISES[id]?.name).slice(0,3).join(' · ')+(r.exercises.length>3?'…':''):'Recuperación'}</p></div>${r?`<button data-start-day="${key}">Entrenar</button>`:''}</article>`}).join('');
- $$('[data-start-day]',$('#weekSchedule')).forEach(b=>b.addEventListener('click',()=>startRoutine(b.dataset.startDay)));
-}
-function populateTrainingSelect(){
- const chart=$('#trainingChartExercise'),current=chart.value;
- chart.innerHTML=Object.entries(EXERCISES).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join('');
- chart.value=current&&EXERCISES[current]?current:'press_banca';
-}
-function renderTraining(){
- state.workouts=state.workouts||[];state.splits=state.splits||[];
- const stats=state.workouts.map(sessionStats);setText('trainingSessions',state.workouts.length);setText('trainingVolume',fmt(stats.reduce((a,x)=>a+x.volume,0)));
- const prs=new Set();Object.keys(EXERCISES).forEach(ex=>{if(state.workouts.some(w=>w.exercise===ex))prs.add(ex)});setText('trainingPrs',prs.size);
- $('#activeSplitSelect').innerHTML='<option value="">Sin split activo</option>'+state.splits.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');$('#activeSplitSelect').value=state.activeSplitId||'';
- const split=activeSplit(),routine=split?.days.find(x=>x.day===todayKey());setText('todayWorkoutTitle',routine?.name||'Día libre');setText('todayWorkoutText',routine?`${routine.exercises.length} ejercicios programados`:'Crea o activa un split para organizar tu semana.');
- renderWeek();renderExerciseLibrary();renderSession();populateTrainingSelect();
- const list=$('#workoutHistory');list.innerHTML='';const items=[...state.workouts].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt)).slice(0,12);$('#workoutEmpty').hidden=items.length>0;
- items.forEach(w=>{const s=sessionStats(w),el=document.createElement('article');el.className='workout-item card';el.innerHTML=`<div class="workout-item-header"><div><h3>${EXERCISES[w.exercise]?.name||w.exercise}</h3><small>${escapeHtml(w.note||'Sin nota')}</small></div><time>${new Date(w.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'})}</time></div><div class="workout-stats"><div><strong>${fmt(s.e1rm,1)} kg</strong><small>1RM estimado</small></div><div><strong>${fmt(s.volume)} kg</strong><small>Volumen</small></div><div><strong>${fmt(s.avgRir,1)}</strong><small>RIR medio</small></div></div><div class="workout-sets">${w.sets.map((x,i)=>`S${i+1}: ${fmt(x.weight,1)} kg × ${x.reps} · RIR ${x.rir}`).join(' &nbsp;|&nbsp; ')}</div><button class="workout-delete" data-workout-delete="${w.id}">Eliminar sesión</button>`;list.appendChild(el)});
- $$('[data-workout-delete]',list).forEach(b=>b.addEventListener('click',()=>{state.workouts=state.workouts.filter(x=>x.id!==b.dataset.workoutDelete);saveState();renderAll();toast('Sesión eliminada')}));
-}
-$('#trainingChartExercise').addEventListener('change',renderCharts);
-$$('#trainingMetricTabs button').forEach(b=>b.addEventListener('click',()=>{$$('#trainingMetricTabs button').forEach(x=>x.classList.toggle('selected',x===b));trainingMetric=b.dataset.metric;renderCharts()}));
-
-function renderHistory(){
- const list=$('#historyList'),items=[...state.measurements].sort((a,b)=>b.date.localeCompare(a.date));list.innerHTML='';$('#historyEmpty').hidden=items.length>0;
- items.forEach(x=>{const el=document.createElement('article');el.className='history-item card';el.innerHTML=`<div><h3>${new Date(x.date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'long',year:'numeric'})}</h3><p>${[x.waist?`Cintura ${fmt(x.waist,1)} cm`:'',x.fat?`Grasa ${fmt(x.fat,1)}%`:'',escapeHtml(x.note||'')].filter(Boolean).join(' · ')||'Sin datos adicionales'}</p></div><strong>${fmt(x.weight,1)} kg</strong><button data-delete="${x.id}">Eliminar</button>`;list.appendChild(el)});
- $$('[data-delete]',list).forEach(b=>b.addEventListener('click',()=>{state.measurements=state.measurements.filter(x=>x.id!==b.dataset.delete);saveState();renderAll();toast('Registro eliminado')}));
-}
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
-function drawSeriesChart(canvas,emptyId,items,valueGetter,options={}){
- const clean=[...items].sort((a,b)=>a.date.localeCompare(b.date)).filter(x=>Number.isFinite(valueGetter(x)));
- const empty=$('#'+emptyId);empty.style.display=clean.length<2?'grid':'none';if(clean.length<2)return;
- const ctx=canvas.getContext('2d'),rect=canvas.getBoundingClientRect(),dpr=devicePixelRatio||1;canvas.width=rect.width*dpr;canvas.height=rect.height*dpr;ctx.scale(dpr,dpr);
- const w=rect.width,h=rect.height,p={l:38,r:12,t:18,b:30};ctx.clearRect(0,0,w,h);
- const vals=clean.map(valueGetter),target=options.target||null,minBase=Math.min(...vals,target??Infinity),maxBase=Math.max(...vals,target??-Infinity),padding=Math.max(1,(maxBase-minBase)*.15);
- const min=Math.max(0,minBase-padding),max=maxBase+padding,range=max-min||1;
- const css=getComputedStyle(document.documentElement),line=css.getPropertyValue('--line').trim(),muted=css.getPropertyValue('--muted').trim(),accent=css.getPropertyValue('--accent').trim(),surface=css.getPropertyValue('--surface').trim();
- ctx.font='10px system-ui';ctx.textAlign='right';ctx.fillStyle=muted;ctx.strokeStyle=line;ctx.lineWidth=1;
- for(let i=0;i<4;i++){const y=p.t+(h-p.t-p.b)*i/3,val=max-range*i/3;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.stroke();ctx.fillText(fmt(val,options.decimals||0),p.l-7,y+3)}
- if(target){const y=p.t+(max-target)/range*(h-p.t-p.b);ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(w-p.r,y);ctx.strokeStyle=muted;ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=muted;ctx.textAlign='left';ctx.fillText('Meta',p.l+4,y-5)}
- const pts=clean.map((x,i)=>({x:p.l+(w-p.l-p.r)*(clean.length===1?.5:i/(clean.length-1)),y:p.t+(max-valueGetter(x))/range*(h-p.t-p.b)}));
- ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.lineTo(pts.at(-1).x,h-p.b);ctx.lineTo(pts[0].x,h-p.b);ctx.closePath();const grad=ctx.createLinearGradient(0,p.t,0,h-p.b);grad.addColorStop(0,accent+'44');grad.addColorStop(1,accent+'00');ctx.fillStyle=grad;ctx.fill();
- ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.strokeStyle=accent;ctx.lineWidth=3;ctx.lineJoin='round';ctx.stroke();
- pts.forEach(q=>{ctx.beginPath();ctx.arc(q.x,q.y,4,0,Math.PI*2);ctx.fillStyle=surface;ctx.fill();ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.stroke()});
- ctx.fillStyle=muted;ctx.textAlign='center';const labels=[0,Math.floor((clean.length-1)/2),clean.length-1].filter((v,i,a)=>a.indexOf(v)===i);labels.forEach(i=>ctx.fillText(new Date(clean[i].date+'T12:00:00').toLocaleDateString('es-PE',{day:'2-digit',month:'short'}),pts[i].x,h-8));
-}
-function renderCharts(){
- drawSeriesChart($('#weightChart'),'emptyChart',state.measurements,x=>x.weight,{decimals:1});
- drawSeriesChart($('#progressChart'),'emptyProgressChart',state.measurements,x=>x.weight,{decimals:1});
- drawSeriesChart($('#proteinChart'),'emptyProteinChart',state.proteinLogs||[],x=>x.grams,{target:state.plan?.protein||null});
- drawSeriesChart($('#progressProteinChart'),'emptyProgressProteinChart',state.proteinLogs||[],x=>x.grams,{target:state.plan?.protein||null});
- const exercise=$('#trainingChartExercise')?.value||$('#exerciseSelect')?.value;
- const sessions=(state.workouts||[]).filter(w=>w.exercise===exercise);
- drawSeriesChart($('#trainingChart'),'emptyTrainingChart',sessions,w=>sessionStats(w)[trainingMetric],{decimals:trainingMetric==='volume'?0:1});
-}
-addEventListener('resize',()=>{clearTimeout(window._resize);window._resize=setTimeout(renderCharts,150)});
-
-function download(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('#exportJsonBtn').addEventListener('click',()=>download(`fit-respaldo-${today()}.json`,JSON.stringify(state,null,2),'application/json'));
-$('#exportCsvBtn').addEventListener('click',()=>{
- const rows=[['Fecha','Peso_kg','Cintura_cm','Grasa_pct','Nota'],...state.measurements.map(x=>[x.date,x.weight,x.waist??'',x.fat??'',x.note??''])];
- const csv='\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replaceAll('"','""')}"`).join(';')).join('\n');download(`fit-progreso-${today()}.csv`,csv,'text/csv;charset=utf-8');
-});
-$('#importJson').addEventListener('change',async e=>{try{const x=JSON.parse(await e.target.files[0].text());if(!x||!Array.isArray(x.measurements))throw Error();state={...defaultState,...x};saveState();applyTheme();renderAll();toast('Respaldo restaurado')}catch{toast('El archivo no es un respaldo válido')}e.target.value=''});
-$('#sharePlanBtn').addEventListener('click',async()=>{
- if(!state.plan)return;const p=state.profile,r=state.plan,text=`Fit Calculator Pro\nObjetivo: ${fmt(r.target)} kcal/día\nProteína: ${fmt(r.protein)} g · Carbohidratos: ${fmt(r.carbs)} g · Grasas: ${fmt(r.fats)} g\nMantenimiento estimado: ${fmt(r.tdee)} kcal/día`;
- try{if(navigator.share)await navigator.share({title:'Mi plan Fit',text});else{await navigator.clipboard.writeText(text);toast('Resumen copiado')}}catch{}
-});
-
-$('#themeBtn').addEventListener('click',cycleTheme);$('#settingsTheme').addEventListener('click',cycleTheme);
-$('#resetBtn').addEventListener('click',()=>$('#confirmModal').hidden=false);$('#cancelReset').addEventListener('click',()=>$('#confirmModal').hidden=true);
-$('#confirmReset').addEventListener('click',()=>{localStorage.removeItem(KEY);state={...defaultState,measurements:[]};$('#confirmModal').hidden=true;location.reload()});
-addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;$('#installBtn').hidden=false});
-$('#installBtn').addEventListener('click',async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;$('#installBtn').hidden=true});
-
+const TEMPLATES={
+ fullbody3:{name:'Full Body 3 días',days:[{day:'mon',name:'Full Body A',exercises:['sentadilla','press_banca','remo_barra','rumano','laterales','plancha']},{day:'wed',name:'Full Body B',exercises:['peso_muerto','press_militar','jalon_pecho','bulgaras','curl_biceps','extension_triceps']},{day:'fri',name:'Full Body C',exercises:['prensa','press_inclinado','remo_polea','hip_thrust','face_pull','crunch']}]},
+ upperlower4:{name:'Upper / Lower 4 días',days:[{day:'mon',name:'Upper A',exercises:['press_banca','remo_barra','press_militar','jalon_pecho','curl_biceps','extension_triceps']},{day:'tue',name:'Lower A',exercises:['sentadilla','rumano','prensa','curl_femoral','gemelos','plancha']},{day:'thu',name:'Upper B',exercises:['press_inclinado','dominadas','press_hombro','remo_polea','curl_martillo','press_frances']},{day:'fri',name:'Lower B',exercises:['peso_muerto','bulgaras','hip_thrust','gemelos','pallof']}]},
+ ppl6:{name:'Push Pull Legs 6 días',days:[{day:'mon',name:'Push A',exercises:['press_banca','press_inclinado','press_militar','laterales','extension_triceps']},{day:'tue',name:'Pull A',exercises:['dominadas','remo_barra','jalon_pecho','face_pull','curl_biceps']},{day:'wed',name:'Legs A',exercises:['sentadilla','rumano','prensa','curl_femoral','gemelos']},{day:'thu',name:'Push B',exercises:['press_mancuernas','fondos','press_hombro','laterales','press_frances']},{day:'fri',name:'Pull B',exercises:['remo_mancuerna','jalon_pecho','remo_polea','face_pull','curl_martillo']},{day:'sat',name:'Legs B',exercises:['peso_muerto','bulgaras','hip_thrust','curl_femoral','gemelos']}]}
+};
+const defaultState={theme:'dark',profile:{name:'Atleta',targetWeight:75,targetCalories:2200,targetProtein:160,targetCarbs:250,targetFats:70},meals:[],weights:[],workouts:[],routines:[],activeRoutineId:null,activeSession:null};
+let state=load(),selectedExercise=null,editingRoutine=null,editingDay=null,sessionSeconds=0,timer=null;
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const today=()=>new Date().toISOString().slice(0,10);
+const fmt=(n,d=0)=>Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:d,maximumFractionDigits:d});
+const uid=()=>crypto.randomUUID?.()||Date.now().toString()+Math.random().toString(16).slice(2);
+function load(){try{return {...defaultState,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return structuredClone(defaultState)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2200)}
+function showView(name){$$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));$$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));$('#pageTitle').textContent=({dashboard:'Dashboard',nutrition:'Nutrición',training:'Entrenamiento',routines:'Rutinas',library:'Ejercicios',progress:'Progreso',settings:'Ajustes'})[name]||'FORGE';$('#sidebar').classList.remove('open');scrollTo({top:0,behavior:'smooth'});requestAnimationFrame(drawAll)}
+$$('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');$('#quickTrainBtn').onclick=()=>{showView('training');startClock()};$('#themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';applyTheme()};
+function applyTheme(){document.documentElement.dataset.theme=state.theme;save();requestAnimationFrame(drawAll)}
+function dayKey(){return DAYKEYS[(new Date().getDay()+6)%7]}
+function activeRoutine(){return state.routines.find(r=>r.id===state.activeRoutineId)||null}
+function todayRoutine(){const r=activeRoutine();return r?.days.find(d=>d.day===dayKey())||null}
+function e1rm(w,r){return w>0&&r>0?w*(1+r/30):0}
+function workoutStats(w){const sets=w.sets||[];return{volume:sets.reduce((a,s)=>a+s.weight*s.reps,0),topWeight:sets.reduce((a,s)=>Math.max(a,s.weight),0),e1rm:sets.reduce((a,s)=>Math.max(a,e1rm(s.weight,s.reps)),0),avgRir:sets.length?sets.reduce((a,s)=>a+s.rir,0)/sets.length:0}}
+function latestWorkout(ex){return [...state.workouts].filter(w=>w.exercise===ex).sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt))[0]||null}
+function recommendation(ex,range='8-12'){const last=latestWorkout(ex),[low,high]=range.split('-').map(Number),step=EXERCISES[ex]?.step||2.5;if(!last)return{title:'Primera referencia',load:'—',text:'Usa una carga que deje 2–3 repeticiones en reserva.'};const s=workoutStats(last),sets=last.sets,allTop=sets.length&&sets.every(x=>x.reps>=high),avg=sets.reduce((a,x)=>a+x.reps,0)/sets.length;if(allTop&&s.avgRir>=1.5)return{title:'Subir carga',load:`${fmt(s.topWeight+step,1)} kg`,text:`Completaste el rango alto con RIR ${fmt(s.avgRir,1)}.`};if(avg<low||s.avgRir<.5)return{title:'Mantener o descargar',load:`${fmt(Math.max(0,s.topWeight-step),1)} kg`,text:'El rendimiento quedó por debajo del rango o demasiado cerca del fallo.'};return{title:'Mantener carga',load:`${fmt(s.topWeight,1)} kg`,text:'Suma una repetición total antes de aumentar peso.'}}
+function renderAll(){renderHeader();renderDashboard();renderNutrition();renderTraining();renderRoutines();renderLibrary();renderProgress();renderSettings();drawAll()}
+function renderHeader(){const d=new Date();$('#todayLabel').textContent=d.toLocaleDateString('es-PE',{weekday:'long',day:'2-digit',month:'long'}).toUpperCase();$('#sidebarName').textContent=state.profile.name||'Atleta'}
+function todayMeals(){return state.meals.filter(m=>m.date===today())}
+function mealTotals(items=todayMeals()){return items.reduce((a,m)=>({cal:a.cal+m.calories,p:a.p+m.protein,c:a.c+m.carbs,f:a.f+m.fats}),{cal:0,p:0,c:0,f:0})}
+function weekStart(){const d=new Date();const diff=(d.getDay()+6)%7;d.setDate(d.getDate()-diff);d.setHours(0,0,0,0);return d}
+function currentWeight(){return [...state.weights].sort((a,b)=>b.date.localeCompare(a.date))[0]?.weight||null}
+function weeklyVolume(){const ws=weekStart();return state.workouts.filter(w=>new Date(w.date+'T12:00:00')>=ws).reduce((a,w)=>a+workoutStats(w).volume,0)}
+function renderDashboard(){const t=mealTotals(),p=state.profile,cw=currentWeight(),tr=todayRoutine();$('#heroGreeting').textContent=`${p.name||'Atleta'}, construye progreso medible.`;$('#heroSummary').textContent=state.workouts.length?'Tus datos ya permiten ajustar carga, volumen y nutrición.':'Registra nutrición y entrenamiento para activar recomendaciones.';$('#readinessScore').textContent=Math.max(55,Math.min(95,78+(state.workouts.length?5:0)+(todayMeals().length?4:0)));$('#todayRoutineName').textContent=tr?.name||'Sin rutina activa';$('#todayRoutineBadge').textContent=tr?'PROGRAMADO':'LIBRE';$('#todayRoutineMeta').textContent=tr?`${tr.exercises.length} ejercicios programados`:'Crea o activa una rutina semanal.';$('#dashCalories').textContent=fmt(t.cal);$('#dashCaloriesMeta').textContent=`de ${fmt(p.targetCalories)} kcal`;$('#dashCaloriesBar').style.width=Math.min(100,t.cal/p.targetCalories*100)+'%';$('#dashProtein').textContent=fmt(t.p)+' g';$('#dashProteinMeta').textContent=`de ${fmt(p.targetProtein)} g`;$('#dashProteinBar').style.width=Math.min(100,t.p/p.targetProtein*100)+'%';$('#dashWeight').textContent=cw?fmt(cw,1)+' kg':'—';const ws=[...state.weights].sort((a,b)=>a.date.localeCompare(b.date));$('#dashWeightTrend').textContent=ws.length>1?`${ws.at(-1).weight-ws[0].weight>=0?'+':''}${fmt(ws.at(-1).weight-ws[0].weight,1)} kg total`:'Sin registros suficientes';$('#dashVolume').textContent=fmt(weeklyVolume())+' kg';$('#dashVolumeTrend').textContent=state.workouts.length?`${state.workouts.length} registros históricos`:'Sin sesiones';$('#donutCalories').textContent=fmt(t.cal);$('#macroPercent').textContent=fmt(Math.min(100,t.cal/p.targetCalories*100))+'%';$('#macroProtein').textContent=`${fmt(t.p)} / ${fmt(p.targetProtein)} g`;$('#macroCarbs').textContent=`${fmt(t.c)} / ${fmt(p.targetCarbs)} g`;$('#macroFats').textContent=`${fmt(t.f)} / ${fmt(p.targetFats)} g`;const pp=Math.min(100,t.p/p.targetProtein*100),cp=Math.min(100,t.c/p.targetCarbs*100),fp=Math.min(100,t.f/p.targetFats*100);$('#macroDonut').style.background=`conic-gradient(var(--mint) 0 ${pp/3}%,var(--blue) ${pp/3}% ${(pp+cp)/3}%,var(--violet) ${(pp+cp)/3}% ${(pp+cp+fp)/3}%,var(--panel2) ${(pp+cp+fp)/3}% 100%)`;const ex=state.workouts.at(-1)?.exercise||'press_banca',rec=recommendation(ex);$('#strengthChartTitle').textContent=EXERCISES[ex]?.name||'Ejercicio principal';$('#recommendationTitle').textContent=rec.title;$('#recommendationLoad').textContent=rec.load;$('#recommendationText').textContent=rec.text}
+$('#startTodayWorkout').onclick=()=>{const tr=todayRoutine();if(tr)startRoutineSession(tr);else{ensureSession();showView('training');startClock()}}
+function renderNutrition(){const t=mealTotals(),p=state.profile;$('#nutritionTarget').textContent=fmt(p.targetCalories);$('#nutritionConsumed').textContent=fmt(t.cal);$('#nutritionRemaining').textContent=fmt(Math.max(0,p.targetCalories-t.cal));const seven=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().slice(0,10)});const balance=seven.reduce((a,d)=>a+state.meals.filter(m=>m.date===d).reduce((x,m)=>x+m.calories,0)-p.targetCalories,0);$('#weeklyBalance').textContent=(balance>0?'+':'')+fmt(balance);const list=$('#mealList');list.innerHTML='';todayMeals().forEach(m=>{const el=document.createElement('div');el.className='meal';el.innerHTML=`<div><strong>${esc(m.name)}</strong><small>${m.date}</small></div><div class="meal-stat">${fmt(m.calories)}<small>kcal</small></div><div class="meal-stat">${fmt(m.protein)} g<small>proteína</small></div><div class="meal-stat">${fmt(m.carbs)} g<small>carbos</small></div><div class="meal-stat">${fmt(m.fats)} g<small>grasas</small></div><button data-del-meal="${m.id}">×</button>`;list.appendChild(el)});$('#mealEmpty').style.display=todayMeals().length?'none':'block';$$('[data-del-meal]',list).forEach(b=>b.onclick=()=>{state.meals=state.meals.filter(m=>m.id!==b.dataset.delMeal);save();renderAll();toast('Comida eliminada')});const cw=currentWeight();if(cw){const projected=cw-balance/7700*4;$('#projectedWeight').textContent=fmt(projected,1)+' kg';$('#projectionText').textContent=`Proyección a 4 semanas según el balance registrado en los últimos 7 días.`}else{$('#projectedWeight').textContent='—';$('#projectionText').textContent='Registra peso y alimentación para estimar una tendencia.'}}
+$('#addMealBtn').onclick=()=>openModal('mealModal');$('#mealForm').onsubmit=e=>{e.preventDefault();state.meals.push({id:uid(),date:today(),name:$('#mealName').value.trim(),calories:+$('#mealCalories').value,protein:+$('#mealProtein').value,carbs:+$('#mealCarbs').value,fats:+$('#mealFats').value});save();e.target.reset();closeModal('mealModal');renderAll();toast('Comida registrada')}
+function ensureSession(name='Sesión libre'){if(!state.activeSession)state.activeSession={id:uid(),name,date:today(),startedAt:new Date().toISOString(),exercises:[]}}
+function startRoutineSession(r){state.activeSession={id:uid(),name:r.name,date:today(),startedAt:new Date().toISOString(),exercises:r.exercises.map(ex=>({exercise:ex,range:'8-12',sets:[{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2}]}))};save();showView('training');startClock();renderTraining()}
+function startClock(){if(timer)return;timer=setInterval(()=>{sessionSeconds++;$('#sessionClock').textContent=`${String(Math.floor(sessionSeconds/60)).padStart(2,'0')}:${String(sessionSeconds%60).padStart(2,'0')}`},1000)}
+function renderTraining(){const s=state.activeSession;$('#activeSessionName').textContent=s?.name||'Sesión libre';$('#activeSessionMeta').textContent=s?`${s.exercises.length} ejercicios · ${s.date}`:'Añade ejercicios o inicia la rutina del día.';$('#activeSessionEmpty').style.display=s?.exercises.length?'none':'block';const list=$('#activeExerciseList');list.innerHTML='';if(!s)return;s.exercises.forEach((item,idx)=>{const ex=EXERCISES[item.exercise],rec=recommendation(item.exercise,item.range),el=document.createElement('article');el.className='panel active-exercise';el.innerHTML=`<div class="active-head"><div class="exercise-icon">${ex.icon}</div><div><h3>${idx+1}. ${ex.name}</h3><p>${ex.muscle} · ${item.range} reps</p></div><button data-remove-ex="${idx}">×</button></div><div class="smart-tip"><strong>${rec.title}: ${rec.load}</strong>${rec.text}</div><div class="sets"><div class="set-head"><span>#</span><span>kg</span><span>reps</span><span>RIR</span><span></span></div>${item.sets.map((set,si)=>`<div class="set-row" data-set="${si}"><span>${si+1}</span><input data-field="weight" type="number" step="0.5" value="${set.weight}"><input data-field="reps" type="number" value="${set.reps}"><input data-field="rir" type="number" min="0" max="10" value="${set.rir}"><button data-done="${si}">✓</button></div>`).join('')}<button class="add-set" data-add-set="${idx}">+ Añadir serie</button></div>`;list.appendChild(el);$$('input',el).forEach(inp=>inp.oninput=()=>{const si=+inp.closest('[data-set]').dataset.set;item.sets[si][inp.dataset.field]=inp.value;save()})});$$('[data-remove-ex]',list).forEach(b=>b.onclick=()=>{s.exercises.splice(+b.dataset.removeEx,1);save();renderTraining()});$$('[data-add-set]',list).forEach(b=>b.onclick=()=>{s.exercises[+b.dataset.addSet].sets.push({weight:'',reps:'',rir:2});save();renderTraining()})}
+$('#addExerciseTraining').onclick=()=>{ensureSession();openPicker('session')};$('#chooseRoutineWorkout').onclick=()=>{const tr=todayRoutine();if(tr)startRoutineSession(tr);else toast('No hay rutina para hoy')};$('#clearSessionBtn').onclick=()=>{state.activeSession=null;save();renderTraining();toast('Sesión limpiada')};$('#finishSessionBtn').onclick=()=>{const s=state.activeSession;if(!s||!s.exercises.length)return toast('No hay ejercicios');let count=0;s.exercises.forEach(item=>{const sets=item.sets.map(x=>({weight:+x.weight||0,reps:+x.reps||0,rir:+x.rir||0})).filter(x=>x.reps>0);if(sets.length){state.workouts.push({id:uid(),date:s.date,exercise:item.exercise,sets,note:s.name,createdAt:new Date().toISOString()});count++}});if(!count)return toast('Registra al menos una serie');state.activeSession=null;clearInterval(timer);timer=null;sessionSeconds=0;$('#sessionClock').textContent='00:00';save();renderAll();showView('progress');toast('Entrenamiento guardado')}
+function renderRoutines(){const strip=$('#routineTemplates');strip.innerHTML=Object.entries(TEMPLATES).map(([k,t])=>`<article class="panel template-card"><p class="eyebrow violet">PLANTILLA</p><h3>${t.name}</h3><p>${t.days.length} días programados</p><button class="secondary full" data-use-template="${k}">Usar plantilla</button></article>`).join('');$$('[data-use-template]',strip).forEach(b=>b.onclick=()=>useTemplate(b.dataset.useTemplate));const list=$('#routineList');list.innerHTML='';state.routines.forEach(r=>{const el=document.createElement('article');el.className='panel routine-card';el.innerHTML=`<p class="eyebrow ${r.id===state.activeRoutineId?'mint':''}">${r.id===state.activeRoutineId?'ACTIVA':'RUTINA'}</p><h3>${esc(r.name)}</h3><p>${r.days.length} días de entrenamiento</p><div class="routine-days">${r.days.map(d=>`<span>${DAYS[DAYKEYS.indexOf(d.day)].slice(0,3)} · ${esc(d.name)}</span>`).join('')}</div><div class="routine-actions"><button class="secondary" data-edit-routine="${r.id}">Editar</button><button class="primary" data-activate-routine="${r.id}">${r.id===state.activeRoutineId?'Activa':'Activar'}</button></div></article>`;list.appendChild(el)});$('#routineEmpty').style.display=state.routines.length?'none':'block';$$('[data-edit-routine]',list).forEach(b=>b.onclick=()=>openRoutineEditor(state.routines.find(r=>r.id===b.dataset.editRoutine)));$$('[data-activate-routine]',list).forEach(b=>b.onclick=()=>{state.activeRoutineId=b.dataset.activateRoutine;save();renderAll();toast('Rutina activada')})}
+function useTemplate(k){const t=TEMPLATES[k],r={id:uid(),name:t.name,days:structuredClone(t.days)};state.routines.push(r);state.activeRoutineId=r.id;save();renderAll();toast('Plantilla añadida')}
+$('#newRoutineBtn').onclick=()=>openRoutineEditor(null);
+function openRoutineEditor(r){editingRoutine=r?structuredClone(r):{id:null,name:'Mi rutina',days:[]};$('#routineName').value=editingRoutine.name;renderRoutineDays();openModal('routineModal')}
+function renderRoutineDays(){const map=Object.fromEntries(editingRoutine.days.map(d=>[d.day,d]));$('#routineDayEditor').innerHTML=DAYKEYS.map((key,i)=>{const d=map[key]||{day:key,name:'Descanso',exercises:[]};return `<div class="day-row" data-day="${key}"><div class="day-row-head"><strong>${DAYS[i]}</strong><input class="day-name" value="${escAttr(d.name)}"><button class="secondary" data-pick-day="${key}">Ejercicios</button></div><div class="day-exercises">${d.exercises.map(ex=>`<span>${EXERCISES[ex]?.name||ex}</span>`).join('')||'<span>Sin ejercicios</span>'}</div></div>`}).join('');$$('.day-name',$('#routineDayEditor')).forEach(inp=>inp.oninput=()=>{const key=inp.closest('[data-day]').dataset.day;let d=editingRoutine.days.find(x=>x.day===key);if(!d){d={day:key,name:inp.value,exercises:[]};editingRoutine.days.push(d)}else d.name=inp.value});$$('[data-pick-day]',$('#routineDayEditor')).forEach(b=>b.onclick=()=>{editingDay=b.dataset.pickDay;openPicker('routine')})}
+$('#saveRoutineBtn').onclick=()=>{editingRoutine.name=$('#routineName').value.trim()||'Mi rutina';editingRoutine.days=editingRoutine.days.filter(d=>d.exercises.length||d.name!=='Descanso');if(editingRoutine.id){const i=state.routines.findIndex(r=>r.id===editingRoutine.id);state.routines[i]=editingRoutine}else{editingRoutine.id=uid();state.routines.push(editingRoutine);if(!state.activeRoutineId)state.activeRoutineId=editingRoutine.id}save();closeModal('routineModal');renderAll();toast('Rutina guardada')}
+function renderLibrary(){const muscles=[...new Set(Object.values(EXERCISES).map(e=>e.muscle))].sort(),equipment=[...new Set(Object.values(EXERCISES).map(e=>e.equipment))].sort();if(!$('#muscleFilter').dataset.ready){$('#muscleFilter').innerHTML='<option value="">Todos los músculos</option>'+muscles.map(x=>`<option>${x}</option>`).join('');$('#equipmentFilter').innerHTML='<option value="">Todo el equipo</option>'+equipment.map(x=>`<option>${x}</option>`).join('');$('#muscleFilter').dataset.ready='1'}const q=$('#exerciseSearch').value.toLowerCase(),m=$('#muscleFilter').value,e=$('#equipmentFilter').value,entries=Object.entries(EXERCISES).filter(([id,x])=>(!q||`${x.name} ${x.muscle} ${x.secondary} ${x.equipment}`.toLowerCase().includes(q))&&(!m||x.muscle===m)&&(!e||x.equipment===e));$('#exerciseCount').textContent=entries.length;$('#exerciseGrid').innerHTML=entries.map(([id,x])=>`<article class="panel exercise-card" data-exercise="${id}"><div class="exercise-visual-small">${x.icon}</div><h3>${x.name}</h3><p>${x.muscle}${x.secondary?` · ${x.secondary}`:''}</p><div class="tags"><span>${x.equipment}</span><span>${x.muscle}</span></div></article>`).join('');$$('[data-exercise]',$('#exerciseGrid')).forEach(c=>c.onclick=()=>openExercise(c.dataset.exercise))}
+['exerciseSearch','muscleFilter','equipmentFilter'].forEach(id=>$('#'+id).addEventListener(id==='exerciseSearch'?'input':'change',renderLibrary));
+function openExercise(id){selectedExercise=id;const x=EXERCISES[id];$('#exerciseVisual').textContent=x.icon;$('#exerciseMuscle').textContent=x.muscle.toUpperCase();$('#exerciseName').textContent=x.name;$('#exerciseMeta').textContent=`${x.equipment}${x.secondary?` · También trabaja ${x.secondary}`:''}`;$('#exerciseInstructions').textContent=x.instructions;$('#exerciseTip').textContent=x.tip;openModal('exerciseModal')}
+$('#addExerciseFromModal').onclick=()=>{ensureSession();state.activeSession.exercises.push({exercise:selectedExercise,range:'8-12',sets:[{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2}]});save();closeModal('exerciseModal');showView('training');startClock();renderTraining();toast('Ejercicio añadido')}
+function openPicker(mode){$('#pickerTitle').textContent=mode==='routine'?`Ejercicios del ${DAYS[DAYKEYS.indexOf(editingDay)]}`:'Añadir a sesión';$('#pickerSearch').value='';$('#pickerModal').dataset.mode=mode;renderPicker();openModal('pickerModal')}
+function renderPicker(){const q=$('#pickerSearch').value.toLowerCase();$('#pickerList').innerHTML=Object.entries(EXERCISES).filter(([id,x])=>!q||`${x.name} ${x.muscle}`.toLowerCase().includes(q)).map(([id,x])=>`<div class="picker-item" data-pick="${id}"><div class="mini-icon">${x.icon}</div><div><h4>${x.name}</h4><p>${x.muscle} · ${x.equipment}</p></div><span>+</span></div>`).join('');$$('[data-pick]',$('#pickerList')).forEach(x=>x.onclick=()=>{const id=x.dataset.pick;if($('#pickerModal').dataset.mode==='session'){ensureSession();state.activeSession.exercises.push({exercise:id,range:'8-12',sets:[{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2},{weight:'',reps:'',rir:2}]});save();closeModal('pickerModal');renderTraining();toast('Ejercicio añadido')}else{let d=editingRoutine.days.find(d=>d.day===editingDay);if(!d){d={day:editingDay,name:'Entrenamiento',exercises:[]};editingRoutine.days.push(d)}if(!d.exercises.includes(id))d.exercises.push(id);closeModal('pickerModal');renderRoutineDays();toast('Ejercicio añadido')}})}
+$('#pickerSearch').oninput=renderPicker;
+function renderProgress(){const seven=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().slice(0,10)}),target=state.profile.targetCalories,days=seven.map(d=>state.meals.filter(m=>m.date===d).reduce((a,m)=>a+m.calories,0)),valid=days.filter(x=>x>0),adh=valid.length?valid.reduce((a,x)=>a+Math.min(100,x/target*100),0)/valid.length:0;$('#adherenceValue').textContent=fmt(adh)+'%';const hist=$('#workoutHistory');hist.innerHTML='';[...state.workouts].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt)).slice(0,12).forEach(w=>{const s=workoutStats(w),el=document.createElement('article');el.className='panel history-item';el.innerHTML=`<div><h3>${EXERCISES[w.exercise]?.name||w.exercise}</h3><p>${w.date} · ${esc(w.note||'Entrenamiento')}</p></div><div><strong>${fmt(s.e1rm,1)} kg</strong><small>1RM estimado</small></div><div><strong>${fmt(s.volume)} kg</strong><small>volumen</small></div><div><strong>${fmt(s.avgRir,1)}</strong><small>RIR medio</small></div><button class="danger-btn" data-del-workout="${w.id}">Borrar</button>`;hist.appendChild(el)});$$('[data-del-workout]',hist).forEach(b=>b.onclick=()=>{state.workouts=state.workouts.filter(w=>w.id!==b.dataset.delWorkout);save();renderAll();toast('Registro eliminado')})}
+$('#addWeightBtn').onclick=()=>{$('#weightDate').value=today();openModal('weightModal')};$('#weightForm').onsubmit=e=>{e.preventDefault();const date=$('#weightDate').value,weight=+$(' #weightValue'.trim()).value;state.weights=state.weights.filter(x=>x.date!==date);state.weights.push({id:uid(),date,weight});state.weights.sort((a,b)=>a.date.localeCompare(b.date));save();e.target.reset();closeModal('weightModal');renderAll();toast('Peso guardado')}
+function renderSettings(){const p=state.profile;$('#profileName').value=p.name||'';$('#targetWeight').value=p.targetWeight||'';$('#targetCalories').value=p.targetCalories||'';$('#targetProtein').value=p.targetProtein||'';$('#targetCarbs').value=p.targetCarbs||'';$('#targetFats').value=p.targetFats||''}
+$('#settingsForm').onsubmit=e=>{e.preventDefault();state.profile={name:$('#profileName').value.trim()||'Atleta',targetWeight:+$('#targetWeight').value||75,targetCalories:+$('#targetCalories').value||2200,targetProtein:+$('#targetProtein').value||160,targetCarbs:+$('#targetCarbs').value||250,targetFats:+$('#targetFats').value||70};save();renderAll();toast('Ajustes guardados')};$('#exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=`FORGE-respaldo-${today()}.json`;a.click();toast('Respaldo exportado')};$('#importInput').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());state={...defaultState,...x};save();applyTheme();renderAll();toast('Respaldo restaurado')}catch{toast('Archivo inválido')}e.target.value=''};$('#resetBtn').onclick=()=>{if(confirm('¿Borrar todos los datos locales?')){localStorage.removeItem(KEY);location.reload()}}
+function openModal(id){$('#'+id).hidden=false}function closeModal(id){$('#'+id).hidden=true}$$('[data-close]').forEach(x=>x.onclick=()=>closeModal(x.dataset.close));
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escAttr(s){return esc(s).replace(/"/g,'&quot;')}
+function drawLine(canvas,values,empty,accent){if(!canvas||canvas.offsetParent===null)return;empty.style.display=values.length<2?'grid':'none';if(values.length<2)return;const dpr=devicePixelRatio||1,r=canvas.getBoundingClientRect(),ctx=canvas.getContext('2d');canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.scale(dpr,dpr);const w=r.width,h=r.height,p=20,min=Math.min(...values)-.5,max=Math.max(...values)+.5,range=max-min||1,css=getComputedStyle(document.documentElement),line=css.getPropertyValue('--line').trim(),panel=css.getPropertyValue('--panel').trim();ctx.clearRect(0,0,w,h);ctx.strokeStyle=line;for(let i=0;i<4;i++){const y=p+(h-2*p)*i/3;ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(w-p,y);ctx.stroke()}const pts=values.map((v,i)=>({x:p+(w-2*p)*i/(values.length-1),y:p+(max-v)/range*(h-2*p)}));ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.strokeStyle=accent;ctx.lineWidth=3;ctx.stroke();pts.forEach(q=>{ctx.beginPath();ctx.arc(q.x,q.y,3.5,0,Math.PI*2);ctx.fillStyle=panel;ctx.fill();ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.stroke()})}
+function drawBars(canvas,values,empty,accent){if(!canvas||canvas.offsetParent===null)return;empty.style.display=values.length?'none':'grid';if(!values.length)return;const dpr=devicePixelRatio||1,r=canvas.getBoundingClientRect(),ctx=canvas.getContext('2d');canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.scale(dpr,dpr);const w=r.width,h=r.height,max=Math.max(...values)*1.1,gap=11,bw=(w-gap*(values.length+1))/values.length;ctx.clearRect(0,0,w,h);ctx.fillStyle=accent;values.forEach((v,i)=>{const bh=(h-25)*v/max;ctx.beginPath();ctx.roundRect(gap+i*(bw+gap),h-bh,bw,bh,7);ctx.fill()})}
+function drawAll(){const css=getComputedStyle(document.documentElement),mint=css.getPropertyValue('--mint').trim(),violet=css.getPropertyValue('--violet').trim(),blue=css.getPropertyValue('--blue').trim(),weights=[...state.weights].sort((a,b)=>a.date.localeCompare(b.date)).map(x=>x.weight);drawLine($('#weightChart'),weights,$('#weightChartEmpty'),mint);drawLine($('#progressWeightChart'),weights,$('#progressWeightEmpty'),mint);const ex=state.workouts.at(-1)?.exercise||'press_banca',strength=state.workouts.filter(w=>w.exercise===ex).sort((a,b)=>a.date.localeCompare(b.date)).map(w=>workoutStats(w).e1rm);drawLine($('#strengthChart'),strength,$('#strengthChartEmpty'),violet);const weeks=[];for(let i=5;i>=0;i--){const end=new Date();end.setDate(end.getDate()-i*7);const start=new Date(end);start.setDate(start.getDate()-6);weeks.push(state.workouts.filter(w=>{const d=new Date(w.date+'T12:00:00');return d>=start&&d<=end}).reduce((a,w)=>a+workoutStats(w).volume,0))}drawBars($('#volumeChart'),weeks.filter((v,i)=>v||weeks.some(Boolean)),$('#volumeEmpty'),blue)}
+addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(drawAll,120)});
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',()=>{if(state.theme==='auto')applyTheme()});
-$('#proteinDate').value=today();populateFilters();populateSplitPickerFilters();
-applyTheme();hydrateForm();renderAll();renderProgress();
+applyTheme();renderAll();
 })();

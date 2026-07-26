@@ -1,39 +1,20 @@
-FIT CALCULATOR PRO — v1.2.2
+FORGE PERFORMANCE OS v2.0.0
 
-CORRECCIÓN CRÍTICA
-La versión 1.2.1 cargaba el JavaScript antes de crear el selector visual de ejercicios.
-Eso generaba un error al iniciar y detenía toda la aplicación.
+PROYECTO SIN CARPETAS, LISTO PARA GITHUB PAGES.
 
-CORREGIDO
-- JavaScript cargado al final del documento.
-- Selector visual disponible antes de conectar eventos.
-- Caché actualizada a v1.2.2.
-- URL del script con control de versión para evitar mezclar archivos antiguos.
-- Protección adicional ante errores de interfaz.
+MÓDULOS:
+- Dashboard de rendimiento.
+- Nutrición y macros.
+- Registro de peso.
+- Rutinas y splits.
+- Biblioteca de ejercicios.
+- Sesión activa con series, peso, repeticiones y RIR.
+- Sobrecarga progresiva.
+- Gráficos de peso, fuerza y volumen.
+- Historial.
+- Ajustes, exportación e importación.
+- PWA y funcionamiento offline.
 
-ACTUALIZACIÓN RECOMENDADA
-1. Elimina todos los archivos anteriores del repositorio.
-2. Sube todos los archivos de este ZIP.
-3. Abre la dirección de GitHub Pages en Safari y recarga.
-4. Si la app está instalada, elimínala de la pantalla de inicio y vuelve a añadirla.
-
-
-ACTUALIZACIÓN v1.2.3 ATLAS
-- Atlas Player integrado en Peso muerto convencional.
-- 16 fotogramas, reproducción, pausa, avance manual y velocidad.
-- Service Worker actualizado para forzar la nueva versión.
-
-
-VERSIÓN 1.2.4
-- Se eliminaron los controles visibles de Atlas.
-- La animación inicia automáticamente y se repite en bucle infinito.
-- Se actualizó la caché de la PWA para forzar la nueva versión.
-
-
-VERSIÓN 1.2.5 · ATLAS FINO FINAL
-- Nuevo modelo integrado en Peso muerto convencional.
-- Ocho cuadros optimizados: cuatro poses de subida y descenso invertido.
-- Sin números ni textos dentro de la animación.
-- Reproducción automática en bucle infinito.
-- Sin controles visibles.
-- Caché PWA renovada.
+PUBLICACIÓN:
+Sube todos los archivos del ZIP directamente a la raíz del repositorio.
+En GitHub: Settings > Pages > Deploy from branch > main > /root.
