@@ -1,20 +1,15 @@
-FORGE PERFORMANCE OS v2.0.0
+FORGE PERFORMANCE OS v2.1.0
 
-PROYECTO SIN CARPETAS, LISTO PARA GITHUB PAGES.
+NUEVO MÓDULO: PLAN AUTOMÁTICO
+- Registro de objetivos y datos personales.
+- Cálculo de metabolismo basal y gasto diario.
+- Calorías objetivo para perder grasa, mantener o ganar masa.
+- Macros automáticos: proteína, carbohidratos y grasas.
+- Agua diaria orientativa.
+- Cardio semanal: minutos, sesiones e intensidad.
+- Rutina automática según 2–6 días, experiencia, enfoque y equipamiento.
+- Proyección de tiempo hacia el peso objetivo.
+- Botón para aplicar macros y rutina a toda la app.
 
-MÓDULOS:
-- Dashboard de rendimiento.
-- Nutrición y macros.
-- Registro de peso.
-- Rutinas y splits.
-- Biblioteca de ejercicios.
-- Sesión activa con series, peso, repeticiones y RIR.
-- Sobrecarga progresiva.
-- Gráficos de peso, fuerza y volumen.
-- Historial.
-- Ajustes, exportación e importación.
-- PWA y funcionamiento offline.
-
-PUBLICACIÓN:
-Sube todos los archivos del ZIP directamente a la raíz del repositorio.
-En GitHub: Settings > Pages > Deploy from branch > main > /root.
+PROYECTO SIN CARPETAS.
+Sube todos los archivos directamente a la raíz del repositorio de GitHub Pages.

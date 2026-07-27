@@ -11,12 +11,12 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
-  <title>FORGE Performance OS</title>
+  <title>FORGE Performance OS 2.1</title>
 </head>
 <body>
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
-    <div class="brand"><div class="brand-mark">F</div><div><strong>FORGE</strong><small>PERFORMANCE OS · 2.0</small></div></div>
+    <div class="brand"><div class="brand-mark">F</div><div><strong>FORGE</strong><small>PERFORMANCE OS · 2.1</small></div></div>
     <nav class="nav-list">
       <button class="active" data-view="dashboard"><span>⌂</span>Dashboard</button>
       <button data-view="nutrition"><span>◎</span>Nutrición</button>
@@ -24,6 +24,7 @@
       <button data-view="routines"><span>▦</span>Rutinas</button>
       <button data-view="library"><span>◫</span>Ejercicios</button>
       <button data-view="progress"><span>↗</span>Progreso</button>
+      <button data-view="plan"><span>✦</span>Plan automático</button>
     </nav>
     <div class="side-footer">
       <button data-view="settings"><span>⚙</span>Ajustes</button>
@@ -61,7 +62,7 @@
         <article class="panel chart-panel span-2"><div class="panel-head"><div><p class="eyebrow">COMPOSICIÓN</p><h3>Tendencia de peso</h3></div><span id="weightTrendLabel">—</span></div><canvas id="weightChart"></canvas><div class="chart-empty" id="weightChartEmpty">Registra al menos dos pesos.</div></article>
         <article class="panel macro-card"><div class="panel-head"><div><p class="eyebrow">NUTRICIÓN</p><h3>Macros de hoy</h3></div><span id="macroPercent">0%</span></div><div class="donut" id="macroDonut"><div><strong id="donutCalories">0</strong><small>kcal</small></div></div><div class="macro-list"><div><span><b class="dot protein"></b>Proteína</span><strong id="macroProtein">0 / 160 g</strong></div><div><span><b class="dot carbs"></b>Carbohidratos</span><strong id="macroCarbs">0 / 250 g</strong></div><div><span><b class="dot fats"></b>Grasas</span><strong id="macroFats">0 / 70 g</strong></div></div></article>
         <article class="panel chart-panel"><div class="panel-head"><div><p class="eyebrow">FUERZA</p><h3 id="strengthChartTitle">Ejercicio principal</h3></div><span class="mint" id="strengthChange">—</span></div><canvas id="strengthChart"></canvas><div class="chart-empty" id="strengthChartEmpty">Completa dos sesiones del mismo ejercicio.</div></article>
-        <article class="panel recommendation"><p class="eyebrow violet">SOBRECARGA INTELIGENTE</p><h3 id="recommendationTitle">Primera referencia</h3><div class="rec-main"><strong id="recommendationLoad">—</strong><span id="recommendationRange">8–12 reps</span></div><p id="recommendationText">Registra una sesión para calcular tu siguiente objetivo.</p><button class="secondary full" data-view="training">Abrir entrenamiento</button></article>
+        <article class="panel recommendation"><p class="eyebrow violet">SOBRECARGA INTELIGENTE</p><h3 id="recommendationTitle">Primera referencia</h3><div class="rec-main"><strong id="recommendationLoad">—</strong><span id="recommendationRange">8–12 reps</span></div><p id="recommendationText">Registra una sesión para calcular tu siguiente objetivo.</p><button class="secondary full" data-view="training">Abrir entrenamiento</button><button class="text-link" data-view="plan">Recalcular plan completo</button></article>
       </div>
     </section>
 
@@ -95,6 +96,84 @@
       <div class="section-header"><div><p class="eyebrow mint">PROGRESO</p><h2>Analítica integral</h2><p>Peso, fuerza, volumen y adherencia.</p></div><button class="primary" id="addWeightBtn">+ Registrar peso</button></div>
       <div class="content-grid"><article class="panel chart-panel span-2"><div class="panel-head"><div><p class="eyebrow">PESO</p><h3>Evolución corporal</h3></div></div><canvas id="progressWeightChart"></canvas><div class="chart-empty" id="progressWeightEmpty">Registra al menos dos pesos.</div></article><article class="panel adherence"><p class="eyebrow">ADHERENCIA</p><strong id="adherenceValue">0%</strong><p>Promedio nutricional de los últimos 7 días.</p></article><article class="panel chart-panel"><div class="panel-head"><div><p class="eyebrow">VOLUMEN</p><h3>Últimas semanas</h3></div></div><canvas id="volumeChart"></canvas><div class="chart-empty" id="volumeEmpty">Completa entrenamientos para ver tu volumen.</div></article></div>
       <div class="history-section"><div class="panel-head"><div><p class="eyebrow">HISTORIAL</p><h3>Sesiones recientes</h3></div></div><div id="workoutHistory" class="history-list"></div></div>
+    </section>
+
+
+    <section class="view" id="view-plan">
+      <div class="section-header"><div><p class="eyebrow mint">PLAN AUTOMÁTICO</p><h2>Objetivos, macros y entrenamiento</h2><p>Completa tus datos y genera un plan inicial ajustado a tu objetivo.</p></div></div>
+
+      <div class="plan-layout">
+        <form class="panel goal-form" id="goalForm">
+          <div class="form-section-title"><span>1</span><div><strong>Datos personales</strong><small>Base para calcular metabolismo y gasto diario.</small></div></div>
+          <div class="form-grid">
+            <label>Sexo fisiológico<select id="goalSex" required><option value="male">Masculino</option><option value="female">Femenino</option></select></label>
+            <label>Edad<input id="goalAge" type="number" min="18" max="100" value="30" required></label>
+            <label>Peso actual (kg)<input id="goalWeight" type="number" min="35" max="300" step="0.1" required></label>
+            <label>Estatura (cm)<input id="goalHeight" type="number" min="130" max="230" required></label>
+            <label>Grasa corporal % <small>opcional</small><input id="goalBodyFat" type="number" min="3" max="60" step="0.1"></label>
+            <label>Nivel de actividad<select id="goalActivity"><option value="1.2">Sedentario</option><option value="1.375">Ligero · 1–3 días</option><option value="1.55" selected>Moderado · 3–5 días</option><option value="1.725">Alto · 6–7 días</option><option value="1.9">Muy alto</option></select></label>
+          </div>
+
+          <div class="form-section-title"><span>2</span><div><strong>Objetivo principal</strong><small>Define ritmo, calorías y distribución de macros.</small></div></div>
+          <div class="goal-cards" id="goalCards">
+            <button type="button" data-goal="lose"><strong>Perder grasa</strong><small>Déficit moderado y preservación muscular</small></button>
+            <button type="button" class="selected" data-goal="maintain"><strong>Mantener</strong><small>Recomposición y rendimiento</small></button>
+            <button type="button" data-goal="gain"><strong>Ganar masa</strong><small>Superávit controlado</small></button>
+          </div>
+          <input id="goalType" type="hidden" value="maintain">
+          <div class="form-grid">
+            <label>Peso objetivo (kg)<input id="goalTargetWeight" type="number" min="35" max="300" step="0.1"></label>
+            <label>Ritmo semanal<select id="goalRate"><option value="0.25">Conservador · 0.25 kg</option><option value="0.5" selected>Moderado · 0.50 kg</option><option value="0.75">Rápido · 0.75 kg</option></select></label>
+          </div>
+
+          <div class="form-section-title"><span>3</span><div><strong>Entrenamiento y cardio</strong><small>Disponibilidad y preferencias para generar la semana.</small></div></div>
+          <div class="form-grid">
+            <label>Días de fuerza por semana<select id="goalDays"><option value="2">2 días</option><option value="3">3 días</option><option value="4" selected>4 días</option><option value="5">5 días</option><option value="6">6 días</option></select></label>
+            <label>Experiencia<select id="goalExperience"><option value="beginner">Principiante</option><option value="intermediate" selected>Intermedio</option><option value="advanced">Avanzado</option></select></label>
+            <label>Objetivo de entrenamiento<select id="goalTrainingFocus"><option value="hypertrophy" selected>Hipertrofia</option><option value="strength">Fuerza</option><option value="mixed">Mixto</option></select></label>
+            <label>Equipamiento<select id="goalEquipment"><option value="gym" selected>Gimnasio completo</option><option value="dumbbells">Mancuernas</option><option value="bodyweight">Peso corporal</option></select></label>
+            <label>Preferencia de cardio<select id="goalCardioPreference"><option value="walking">Caminata</option><option value="bike">Bicicleta</option><option value="running">Trote / carrera</option><option value="mixed" selected>Mixto</option></select></label>
+            <label>Cardio actual<select id="goalCurrentCardio"><option value="0">Nada</option><option value="60">Hasta 60 min/semana</option><option value="120" selected>60–120 min/semana</option><option value="180">Más de 120 min/semana</option></select></label>
+          </div>
+
+          <div class="goal-warning">Las recomendaciones son estimaciones generales para adultos sanos. Embarazo, lactancia, enfermedades, medicación o antecedentes alimentarios requieren orientación profesional.</div>
+          <button class="primary full" type="submit">Calcular mi plan</button>
+        </form>
+
+        <aside class="plan-results">
+          <article class="panel result-hero-card">
+            <p class="eyebrow mint">OBJETIVO DIARIO</p>
+            <strong id="planCalories">—</strong><small>kcal / día</small>
+            <span id="planCalorieDelta">Completa el formulario</span>
+          </article>
+
+          <div class="plan-result-grid">
+            <article class="panel plan-result"><span>Proteína</span><strong id="planProtein">—</strong><small>g / día</small></article>
+            <article class="panel plan-result"><span>Carbohidratos</span><strong id="planCarbs">—</strong><small>g / día</small></article>
+            <article class="panel plan-result"><span>Grasas</span><strong id="planFats">—</strong><small>g / día</small></article>
+            <article class="panel plan-result"><span>Agua</span><strong id="planWater">—</strong><small>litros / día</small></article>
+          </div>
+
+          <article class="panel cardio-result">
+            <div class="panel-head"><div><p class="eyebrow">CARDIO</p><h3>Recomendación semanal</h3></div><span id="planCardioSessions">—</span></div>
+            <strong id="planCardioMinutes">—</strong>
+            <p id="planCardioText">Completa el formulario para generar el cardio.</p>
+          </article>
+
+          <article class="panel auto-routine">
+            <div class="panel-head"><div><p class="eyebrow">ENTRENAMIENTO</p><h3 id="planRoutineName">Rutina sugerida</h3></div><span id="planRoutineDays">—</span></div>
+            <div id="planRoutinePreview" class="auto-routine-days"></div>
+          </article>
+
+          <article class="panel plan-projection">
+            <p class="eyebrow violet">PROYECCIÓN</p>
+            <strong id="planWeeks">—</strong>
+            <p id="planProjectionText">Añade un peso objetivo para estimar la duración.</p>
+          </article>
+
+          <button class="primary full" id="applyPlanBtn" disabled>Aplicar plan a FORGE</button>
+        </aside>
+      </div>
     </section>
 
     <section class="view" id="view-settings">

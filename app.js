@@ -42,7 +42,7 @@ const TEMPLATES={
  upperlower4:{name:'Upper / Lower 4 días',days:[{day:'mon',name:'Upper A',exercises:['press_banca','remo_barra','press_militar','jalon_pecho','curl_biceps','extension_triceps']},{day:'tue',name:'Lower A',exercises:['sentadilla','rumano','prensa','curl_femoral','gemelos','plancha']},{day:'thu',name:'Upper B',exercises:['press_inclinado','dominadas','press_hombro','remo_polea','curl_martillo','press_frances']},{day:'fri',name:'Lower B',exercises:['peso_muerto','bulgaras','hip_thrust','gemelos','pallof']}]},
  ppl6:{name:'Push Pull Legs 6 días',days:[{day:'mon',name:'Push A',exercises:['press_banca','press_inclinado','press_militar','laterales','extension_triceps']},{day:'tue',name:'Pull A',exercises:['dominadas','remo_barra','jalon_pecho','face_pull','curl_biceps']},{day:'wed',name:'Legs A',exercises:['sentadilla','rumano','prensa','curl_femoral','gemelos']},{day:'thu',name:'Push B',exercises:['press_mancuernas','fondos','press_hombro','laterales','press_frances']},{day:'fri',name:'Pull B',exercises:['remo_mancuerna','jalon_pecho','remo_polea','face_pull','curl_martillo']},{day:'sat',name:'Legs B',exercises:['peso_muerto','bulgaras','hip_thrust','curl_femoral','gemelos']}]}
 };
-const defaultState={theme:'dark',profile:{name:'Atleta',targetWeight:75,targetCalories:2200,targetProtein:160,targetCarbs:250,targetFats:70},meals:[],weights:[],workouts:[],routines:[],activeRoutineId:null,activeSession:null};
+const defaultState={theme:'dark',profile:{name:'Atleta',targetWeight:75,targetCalories:2200,targetProtein:160,targetCarbs:250,targetFats:70},goalProfile:null,generatedPlan:null,meals:[],weights:[],workouts:[],routines:[],activeRoutineId:null,activeSession:null};
 let state=load(),selectedExercise=null,editingRoutine=null,editingDay=null,sessionSeconds=0,timer=null;
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const today=()=>new Date().toISOString().slice(0,10);
@@ -51,7 +51,7 @@ const uid=()=>crypto.randomUUID?.()||Date.now().toString()+Math.random().toStrin
 function load(){try{return {...defaultState,...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch{return structuredClone(defaultState)}}
 function save(){localStorage.setItem(KEY,JSON.stringify(state))}
 function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2200)}
-function showView(name){$$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));$$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));$('#pageTitle').textContent=({dashboard:'Dashboard',nutrition:'Nutrición',training:'Entrenamiento',routines:'Rutinas',library:'Ejercicios',progress:'Progreso',settings:'Ajustes'})[name]||'FORGE';$('#sidebar').classList.remove('open');scrollTo({top:0,behavior:'smooth'});requestAnimationFrame(drawAll)}
+function showView(name){$$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+name));$$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));$('#pageTitle').textContent=({dashboard:'Dashboard',nutrition:'Nutrición',training:'Entrenamiento',routines:'Rutinas',library:'Ejercicios',progress:'Progreso',plan:'Plan automático',settings:'Ajustes'})[name]||'FORGE';$('#sidebar').classList.remove('open');scrollTo({top:0,behavior:'smooth'});requestAnimationFrame(drawAll)}
 $$('[data-view]').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));$('#menuBtn').onclick=()=>$('#sidebar').classList.toggle('open');$('#quickTrainBtn').onclick=()=>{showView('training');startClock()};$('#themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';applyTheme()};
 function applyTheme(){document.documentElement.dataset.theme=state.theme;save();requestAnimationFrame(drawAll)}
 function dayKey(){return DAYKEYS[(new Date().getDay()+6)%7]}
@@ -61,7 +61,7 @@ function e1rm(w,r){return w>0&&r>0?w*(1+r/30):0}
 function workoutStats(w){const sets=w.sets||[];return{volume:sets.reduce((a,s)=>a+s.weight*s.reps,0),topWeight:sets.reduce((a,s)=>Math.max(a,s.weight),0),e1rm:sets.reduce((a,s)=>Math.max(a,e1rm(s.weight,s.reps)),0),avgRir:sets.length?sets.reduce((a,s)=>a+s.rir,0)/sets.length:0}}
 function latestWorkout(ex){return [...state.workouts].filter(w=>w.exercise===ex).sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt))[0]||null}
 function recommendation(ex,range='8-12'){const last=latestWorkout(ex),[low,high]=range.split('-').map(Number),step=EXERCISES[ex]?.step||2.5;if(!last)return{title:'Primera referencia',load:'—',text:'Usa una carga que deje 2–3 repeticiones en reserva.'};const s=workoutStats(last),sets=last.sets,allTop=sets.length&&sets.every(x=>x.reps>=high),avg=sets.reduce((a,x)=>a+x.reps,0)/sets.length;if(allTop&&s.avgRir>=1.5)return{title:'Subir carga',load:`${fmt(s.topWeight+step,1)} kg`,text:`Completaste el rango alto con RIR ${fmt(s.avgRir,1)}.`};if(avg<low||s.avgRir<.5)return{title:'Mantener o descargar',load:`${fmt(Math.max(0,s.topWeight-step),1)} kg`,text:'El rendimiento quedó por debajo del rango o demasiado cerca del fallo.'};return{title:'Mantener carga',load:`${fmt(s.topWeight,1)} kg`,text:'Suma una repetición total antes de aumentar peso.'}}
-function renderAll(){renderHeader();renderDashboard();renderNutrition();renderTraining();renderRoutines();renderLibrary();renderProgress();renderSettings();drawAll()}
+function renderAll(){renderHeader();renderDashboard();renderNutrition();renderTraining();renderRoutines();renderLibrary();renderProgress();renderPlan();renderSettings();drawAll()}
 function renderHeader(){const d=new Date();$('#todayLabel').textContent=d.toLocaleDateString('es-PE',{weekday:'long',day:'2-digit',month:'long'}).toUpperCase();$('#sidebarName').textContent=state.profile.name||'Atleta'}
 function todayMeals(){return state.meals.filter(m=>m.date===today())}
 function mealTotals(items=todayMeals()){return items.reduce((a,m)=>({cal:a.cal+m.calories,p:a.p+m.protein,c:a.c+m.carbs,f:a.f+m.fats}),{cal:0,p:0,c:0,f:0})}
@@ -92,8 +92,162 @@ function renderPicker(){const q=$('#pickerSearch').value.toLowerCase();$('#picke
 $('#pickerSearch').oninput=renderPicker;
 function renderProgress(){const seven=[...Array(7)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().slice(0,10)}),target=state.profile.targetCalories,days=seven.map(d=>state.meals.filter(m=>m.date===d).reduce((a,m)=>a+m.calories,0)),valid=days.filter(x=>x>0),adh=valid.length?valid.reduce((a,x)=>a+Math.min(100,x/target*100),0)/valid.length:0;$('#adherenceValue').textContent=fmt(adh)+'%';const hist=$('#workoutHistory');hist.innerHTML='';[...state.workouts].sort((a,b)=>(b.date+b.createdAt).localeCompare(a.date+a.createdAt)).slice(0,12).forEach(w=>{const s=workoutStats(w),el=document.createElement('article');el.className='panel history-item';el.innerHTML=`<div><h3>${EXERCISES[w.exercise]?.name||w.exercise}</h3><p>${w.date} · ${esc(w.note||'Entrenamiento')}</p></div><div><strong>${fmt(s.e1rm,1)} kg</strong><small>1RM estimado</small></div><div><strong>${fmt(s.volume)} kg</strong><small>volumen</small></div><div><strong>${fmt(s.avgRir,1)}</strong><small>RIR medio</small></div><button class="danger-btn" data-del-workout="${w.id}">Borrar</button>`;hist.appendChild(el)});$$('[data-del-workout]',hist).forEach(b=>b.onclick=()=>{state.workouts=state.workouts.filter(w=>w.id!==b.dataset.delWorkout);save();renderAll();toast('Registro eliminado')})}
 $('#addWeightBtn').onclick=()=>{$('#weightDate').value=today();openModal('weightModal')};$('#weightForm').onsubmit=e=>{e.preventDefault();const date=$('#weightDate').value,weight=+$(' #weightValue'.trim()).value;state.weights=state.weights.filter(x=>x.date!==date);state.weights.push({id:uid(),date,weight});state.weights.sort((a,b)=>a.date.localeCompare(b.date));save();e.target.reset();closeModal('weightModal');renderAll();toast('Peso guardado')}
+
+function routineForPlan(days,focus,equipment){
+ const gym=equipment==='gym';
+ const db=equipment==='dumbbells';
+ const pick=(gymId,dbId,bwId)=>gym?gymId:db?dbId:bwId;
+ const press=pick('press_banca','press_mancuernas','flexiones');
+ const pull=pick('jalon_pecho','remo_mancuerna','dominadas');
+ const squat=pick('sentadilla','zancadas','sentadilla');
+ const hinge=pick('rumano','rumano','hip_thrust');
+ const shoulder=pick('press_militar','press_hombro','flexiones');
+ const arms1=pick('curl_biceps','curl_martillo','curl_biceps');
+ const arms2=pick('extension_triceps','press_frances','fondos');
+ const core='plancha';
+ let name='',schedule=[];
+ if(days<=2){
+   name='Full Body 2 días';
+   schedule=[
+    {day:'mon',name:'Full Body A',exercises:[squat,press,pull,hinge,shoulder,core]},
+    {day:'thu',name:'Full Body B',exercises:[hinge,press,pull,squat,arms1,arms2]}
+   ];
+ }else if(days===3){
+   name='Full Body 3 días';
+   schedule=[
+    {day:'mon',name:'Full Body A',exercises:[squat,press,pull,hinge,'laterales',core]},
+    {day:'wed',name:'Full Body B',exercises:[hinge,shoulder,pull,'bulgaras',arms1,arms2]},
+    {day:'fri',name:'Full Body C',exercises:['prensa',press,'remo_polea','hip_thrust','face_pull','crunch']}
+   ];
+ }else if(days===4){
+   name='Upper / Lower 4 días';
+   schedule=[
+    {day:'mon',name:'Upper A',exercises:[press,'remo_barra',shoulder,pull,arms1,arms2]},
+    {day:'tue',name:'Lower A',exercises:[squat,hinge,'prensa','curl_femoral','gemelos',core]},
+    {day:'thu',name:'Upper B',exercises:['press_inclinado','dominadas','press_hombro','remo_polea','curl_martillo','press_frances']},
+    {day:'fri',name:'Lower B',exercises:['peso_muerto','bulgaras','hip_thrust','curl_femoral','gemelos','pallof']}
+   ];
+ }else if(days===5){
+   name='Upper / Lower + Especialización';
+   schedule=[
+    {day:'mon',name:'Upper fuerza',exercises:[press,'remo_barra',shoulder,pull,arms1]},
+    {day:'tue',name:'Lower fuerza',exercises:[squat,'peso_muerto','prensa','gemelos',core]},
+    {day:'wed',name:'Push hipertrofia',exercises:['press_inclinado','press_mancuernas','laterales',arms2]},
+    {day:'fri',name:'Pull hipertrofia',exercises:['dominadas','remo_mancuerna','jalon_pecho','face_pull',arms1]},
+    {day:'sat',name:'Pierna hipertrofia',exercises:['bulgaras','rumano','hip_thrust','curl_femoral','gemelos']}
+   ];
+ }else{
+   name='Push Pull Legs 6 días';
+   schedule=structuredClone(TEMPLATES.ppl6.days);
+ }
+ if(focus==='strength'){
+   name+=' · Fuerza';
+ }else if(focus==='hypertrophy'){
+   name+=' · Hipertrofia';
+ }
+ return{name,days:schedule};
+}
+function calculateGoalPlan(g){
+ const bmr=10*g.weight+6.25*g.height-5*g.age+(g.sex==='male'?5:-161);
+ const tdee=bmr*g.activity;
+ const weekly=g.goal==='maintain'?0:g.rate*(g.goal==='lose'?-1:1);
+ let delta=weekly*7700/7;
+ const maxDeficit=-tdee*.25,maxSurplus=tdee*.15;
+ if(g.goal==='lose')delta=Math.max(delta,maxDeficit);
+ if(g.goal==='gain')delta=Math.min(delta,maxSurplus);
+ let calories=tdee+delta;
+ const floor=g.sex==='male'?1500:1200;
+ let safetyAdjusted=false;
+ if(calories<floor){calories=floor;delta=calories-tdee;safetyAdjusted=true}
+ const proteinPerKg=g.goal==='lose'?2.0:g.trainingFocus==='strength'?1.8:g.trainingFocus==='hypertrophy'?1.8:1.6;
+ const protein=Math.round(g.weight*proteinPerKg);
+ const fats=Math.round(g.weight*(g.goal==='gain'?1:g.goal==='lose'?.8:.9));
+ const carbs=Math.max(0,Math.round((calories-protein*4-fats*9)/4));
+ const water=(g.weight*35+(g.activity>=1.55?400:0)+(g.activity>=1.725?250:0))/1000;
+ let cardioMinutes=0,sessions=0,intensity='';
+ if(g.goal==='lose'){
+   cardioMinutes=g.experience==='beginner'?120:g.experience==='advanced'?180:150;
+   sessions=g.days>=5?3:4; intensity='principalmente zona 2, con 1 sesión opcional más intensa';
+ }else if(g.goal==='gain'){
+   cardioMinutes=75;sessions=2;intensity='zona 2 suave para salud y recuperación';
+ }else{
+   cardioMinutes=120;sessions=3;intensity='zona 2, distribuida en sesiones cómodas';
+ }
+ const current=+g.currentCardio||0;
+ cardioMinutes=Math.max(cardioMinutes,current);
+ const routine=routineForPlan(g.days,g.trainingFocus,g.equipment);
+ let weeks=null,goalDate=null;
+ if(g.targetWeight&&g.goal!=='maintain'&&Math.abs(g.targetWeight-g.weight)>.1){
+   const actualWeekly=Math.abs(delta)*7/7700;
+   if(actualWeekly>0){
+     weeks=Math.ceil(Math.abs(g.targetWeight-g.weight)/actualWeekly);
+     const d=new Date();d.setDate(d.getDate()+weeks*7);goalDate=d.toISOString().slice(0,10);
+   }
+ }
+ return{bmr,tdee,calories,delta,protein,carbs,fats,water,cardioMinutes,sessions,intensity,routine,weeks,goalDate,safetyAdjusted,createdAt:new Date().toISOString()};
+}
+function gatherGoalForm(){
+ return{
+  sex:$('#goalSex').value,age:+$('#goalAge').value,weight:+$('#goalWeight').value,height:+$('#goalHeight').value,
+  bodyFat:+$('#goalBodyFat').value||null,activity:+$('#goalActivity').value,goal:$('#goalType').value,
+  targetWeight:+$('#goalTargetWeight').value||null,rate:+$('#goalRate').value,days:+$('#goalDays').value,
+  experience:$('#goalExperience').value,trainingFocus:$('#goalTrainingFocus').value,equipment:$('#goalEquipment').value,
+  cardioPreference:$('#goalCardioPreference').value,currentCardio:+$('#goalCurrentCardio').value
+ };
+}
+function renderPlan(){
+ const g=state.goalProfile,p=state.generatedPlan;
+ if(g){
+   $('#goalSex').value=g.sex;$('#goalAge').value=g.age;$('#goalWeight').value=g.weight;$('#goalHeight').value=g.height;
+   $('#goalBodyFat').value=g.bodyFat||'';$('#goalActivity').value=g.activity;$('#goalType').value=g.goal;
+   $('#goalTargetWeight').value=g.targetWeight||'';$('#goalRate').value=g.rate;$('#goalDays').value=g.days;
+   $('#goalExperience').value=g.experience;$('#goalTrainingFocus').value=g.trainingFocus;$('#goalEquipment').value=g.equipment;
+   $('#goalCardioPreference').value=g.cardioPreference;$('#goalCurrentCardio').value=g.currentCardio;
+   $$('#goalCards button').forEach(b=>b.classList.toggle('selected',b.dataset.goal===g.goal));
+ }
+ if(!p)return;
+ $('#planCalories').textContent=fmt(p.calories);
+ $('#planCalorieDelta').textContent=`${p.delta>0?'+':''}${fmt(p.delta)} kcal frente al mantenimiento${p.safetyAdjusted?' · ajustado':''}`;
+ $('#planProtein').textContent=fmt(p.protein);$('#planCarbs').textContent=fmt(p.carbs);$('#planFats').textContent=fmt(p.fats);$('#planWater').textContent=fmt(p.water,1);
+ $('#planCardioSessions').textContent=`${p.sessions} sesiones`;
+ $('#planCardioMinutes').textContent=`${fmt(p.cardioMinutes)} min / semana`;
+ $('#planCardioText').textContent=`Distribuye ${Math.round(p.cardioMinutes/p.sessions)} minutos por sesión, ${p.intensity}.`;
+ $('#planRoutineName').textContent=p.routine.name;$('#planRoutineDays').textContent=`${p.routine.days.length} días`;
+ $('#planRoutinePreview').innerHTML=p.routine.days.map(d=>`<div class="auto-routine-day"><strong>${DAYS[DAYKEYS.indexOf(d.day)]} · ${d.name}</strong><span>${d.exercises.slice(0,3).map(ex=>EXERCISES[ex]?.name||ex).join(' · ')}${d.exercises.length>3?'…':''}</span></div>`).join('');
+ if(p.weeks){
+   $('#planWeeks').textContent=`${p.weeks} semanas`;
+   $('#planProjectionText').textContent=`Fecha orientativa: ${new Date(p.goalDate+'T12:00:00').toLocaleDateString('es-PE',{month:'long',year:'numeric'})}.`;
+ }else{
+   $('#planWeeks').textContent='Sin plazo';
+   $('#planProjectionText').textContent='Añade un peso objetivo coherente con tu meta para estimar duración.';
+ }
+ $('#applyPlanBtn').disabled=false;
+}
+$$('#goalCards button').forEach(b=>b.onclick=()=>{$$('#goalCards button').forEach(x=>x.classList.toggle('selected',x===b));$('#goalType').value=b.dataset.goal});
+$('#goalForm').onsubmit=e=>{
+ e.preventDefault();const g=gatherGoalForm();
+ if(!g.weight||!g.height||!g.age)return toast('Completa peso, estatura y edad');
+ if(g.goal==='lose'&&g.targetWeight&&g.targetWeight>=g.weight)return toast('El peso objetivo debe ser menor al actual');
+ if(g.goal==='gain'&&g.targetWeight&&g.targetWeight<=g.weight)return toast('El peso objetivo debe ser mayor al actual');
+ state.goalProfile=g;state.generatedPlan=calculateGoalPlan(g);save();renderPlan();toast('Plan calculado');
+};
+$('#applyPlanBtn').onclick=()=>{
+ const p=state.generatedPlan,g=state.goalProfile;if(!p||!g)return;
+ state.profile.targetCalories=Math.round(p.calories);state.profile.targetProtein=p.protein;state.profile.targetCarbs=p.carbs;state.profile.targetFats=p.fats;
+ if(g.targetWeight)state.profile.targetWeight=g.targetWeight;
+ const existing=state.routines.find(r=>r.autoGenerated);
+ const routine={id:existing?.id||uid(),name:p.routine.name,days:structuredClone(p.routine.days),autoGenerated:true};
+ if(existing){const i=state.routines.findIndex(r=>r.id===existing.id);state.routines[i]=routine}else state.routines.push(routine);
+ state.activeRoutineId=routine.id;
+ save();renderAll();toast('Plan aplicado a nutrición y rutinas');showView('dashboard');
+};
+
 function renderSettings(){const p=state.profile;$('#profileName').value=p.name||'';$('#targetWeight').value=p.targetWeight||'';$('#targetCalories').value=p.targetCalories||'';$('#targetProtein').value=p.targetProtein||'';$('#targetCarbs').value=p.targetCarbs||'';$('#targetFats').value=p.targetFats||''}
-$('#settingsForm').onsubmit=e=>{e.preventDefault();state.profile={name:$('#profileName').value.trim()||'Atleta',targetWeight:+$('#targetWeight').value||75,targetCalories:+$('#targetCalories').value||2200,targetProtein:+$('#targetProtein').value||160,targetCarbs:+$('#targetCarbs').value||250,targetFats:+$('#targetFats').value||70};save();renderAll();toast('Ajustes guardados')};$('#exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=`FORGE-respaldo-${today()}.json`;a.click();toast('Respaldo exportado')};$('#importInput').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());state={...defaultState,...x};save();applyTheme();renderAll();toast('Respaldo restaurado')}catch{toast('Archivo inválido')}e.target.value=''};$('#resetBtn').onclick=()=>{if(confirm('¿Borrar todos los datos locales?')){localStorage.removeItem(KEY);location.reload()}}
+$('#settingsForm').onsubmit=e=>{e.preventDefault();state.profile={name:$('#profileName').value.trim()||'Atleta',targetWeight:+$('#targetWeight').value||75,targetCalories:+$('#targetCalories').value||2200,targetProtein:+$('#targetProtein').value||160,targetCarbs:+$('#targetCarbs').value||250,targetFats:+$('#targetFats').value||70};save();renderAll();toast('Ajustes guardados')};$('#exportBtn').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download=`FORGE-respaldo-${today()}.json`;a.click();toast('Respaldo exportado')};$('#importInput').onchange=async e=>{try{const x=JSON.parse(await e.target.files[0].text());state={...defaultState,...x};save();if(!state.goalProfile){
+ const cw=currentWeight();
+ $('#goalWeight').value=cw||75;$('#goalHeight').value=175;$('#goalTargetWeight').value=state.profile.targetWeight||'';
+}
+applyTheme();renderAll();toast('Respaldo restaurado')}catch{toast('Archivo inválido')}e.target.value=''};$('#resetBtn').onclick=()=>{if(confirm('¿Borrar todos los datos locales?')){localStorage.removeItem(KEY);location.reload()}}
 function openModal(id){$('#'+id).hidden=false}function closeModal(id){$('#'+id).hidden=true}$$('[data-close]').forEach(x=>x.onclick=()=>closeModal(x.dataset.close));
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function escAttr(s){return esc(s).replace(/"/g,'&quot;')}
 function drawLine(canvas,values,empty,accent){if(!canvas||canvas.offsetParent===null)return;empty.style.display=values.length<2?'grid':'none';if(values.length<2)return;const dpr=devicePixelRatio||1,r=canvas.getBoundingClientRect(),ctx=canvas.getContext('2d');canvas.width=r.width*dpr;canvas.height=r.height*dpr;ctx.scale(dpr,dpr);const w=r.width,h=r.height,p=20,min=Math.min(...values)-.5,max=Math.max(...values)+.5,range=max-min||1,css=getComputedStyle(document.documentElement),line=css.getPropertyValue('--line').trim(),panel=css.getPropertyValue('--panel').trim();ctx.clearRect(0,0,w,h);ctx.strokeStyle=line;for(let i=0;i<4;i++){const y=p+(h-2*p)*i/3;ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(w-p,y);ctx.stroke()}const pts=values.map((v,i)=>({x:p+(w-2*p)*i/(values.length-1),y:p+(max-v)/range*(h-2*p)}));ctx.beginPath();pts.forEach((q,i)=>i?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y));ctx.strokeStyle=accent;ctx.lineWidth=3;ctx.stroke();pts.forEach(q=>{ctx.beginPath();ctx.arc(q.x,q.y,3.5,0,Math.PI*2);ctx.fillStyle=panel;ctx.fill();ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.stroke()})}
@@ -101,5 +255,9 @@ function drawBars(canvas,values,empty,accent){if(!canvas||canvas.offsetParent===
 function drawAll(){const css=getComputedStyle(document.documentElement),mint=css.getPropertyValue('--mint').trim(),violet=css.getPropertyValue('--violet').trim(),blue=css.getPropertyValue('--blue').trim(),weights=[...state.weights].sort((a,b)=>a.date.localeCompare(b.date)).map(x=>x.weight);drawLine($('#weightChart'),weights,$('#weightChartEmpty'),mint);drawLine($('#progressWeightChart'),weights,$('#progressWeightEmpty'),mint);const ex=state.workouts.at(-1)?.exercise||'press_banca',strength=state.workouts.filter(w=>w.exercise===ex).sort((a,b)=>a.date.localeCompare(b.date)).map(w=>workoutStats(w).e1rm);drawLine($('#strengthChart'),strength,$('#strengthChartEmpty'),violet);const weeks=[];for(let i=5;i>=0;i--){const end=new Date();end.setDate(end.getDate()-i*7);const start=new Date(end);start.setDate(start.getDate()-6);weeks.push(state.workouts.filter(w=>{const d=new Date(w.date+'T12:00:00');return d>=start&&d<=end}).reduce((a,w)=>a+workoutStats(w).volume,0))}drawBars($('#volumeChart'),weeks.filter((v,i)=>v||weeks.some(Boolean)),$('#volumeEmpty'),blue)}
 addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(drawAll,120)});
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if(!state.goalProfile){
+ const cw=currentWeight();
+ $('#goalWeight').value=cw||75;$('#goalHeight').value=175;$('#goalTargetWeight').value=state.profile.targetWeight||'';
+}
 applyTheme();renderAll();
 })();
